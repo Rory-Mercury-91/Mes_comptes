@@ -1,0 +1,196 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  NDK_VERSION: "27.2.12479018"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-desktop:
+    name: Desktop (Windows + latest.json)
+    runs-on: windows-latest
+    outputs:
+      releaseId: ${{ steps.tauri.outputs.releaseId }}
+      appVersion: ${{ steps.tauri.outputs.appVersion }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérifier le secret de signature Tauri
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY est vide ou absent."
+            exit 1
+          fi
+          echo "TAURI_SIGNING_PRIVATE_KEY présent (${#TAURI_SIGNING_PRIVATE_KEY} caractères)."
+
+      - name: Vérifier la configuration Supabase
+        shell: bash
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY absent dans les secrets GitHub."
+            exit 1
+          fi
+          echo "Secrets Supabase présents (URL + clé anon)."
+
+      - name: Compiler et publier la release desktop
+        id: tauri
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        with:
+          tagName: v__VERSION__
+          releaseName: Mes Comptes v__VERSION__
+          releaseBody: |
+            ## Mes Comptes v__VERSION__
+
+            - **Windows** : installateur NSIS (`.exe`) et MSI si disponible
+            - **Android** : APK universel signé (voir asset `Mes_Comptes_*_android-universal.apk`)
+
+            Les mises à jour desktop passent par `latest.json` (Tauri updater).
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
+          args: ""
+
+  build-android:
+    name: Android (APK signé)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Installer le NDK Android
+        run: sdkmanager "ndk;${{ env.NDK_VERSION }}"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: >-
+            aarch64-linux-android,
+            armv7-linux-androideabi,
+            i686-linux-android,
+            x86_64-linux-android
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Initialiser le projet Android Tauri
+        run: test -f src-tauri/gen/android/settings.gradle || npm run android:init -- --ci
+
+      - name: Vérifier les secrets Android
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 absent - APK release non signé."
+            exit 1
+          fi
+          echo "ANDROID_KEYSTORE_BASE64 présent (${#ANDROID_KEYSTORE_BASE64} caractères)."
+
+      - name: Configurer la signature Android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "${{ github.workspace }}/mes-comptes-release.jks"
+          {
+            echo "password=${ANDROID_KEYSTORE_PASSWORD}"
+            echo "keyAlias=${ANDROID_KEY_ALIAS}"
+            echo "storeFile=${{ github.workspace }}/mes-comptes-release.jks"
+          } > src-tauri/gen/android/keystore.properties
+
+      - name: Compiler l'APK Android
+        run: npm run build:android -- --apk
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Publier l'APK en artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mes-comptes-android-apk
+          if-no-files-found: error
+          path: |
+            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+
+  attach-android:
+    name: Joindre l'APK à la release GitHub
+    needs: [build-desktop, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mes-comptes-android-apk
+          path: apk
+
+      - name: Déterminer la version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Renommer l'APK
+        run: |
+          APK=$(find apk -name "*.apk" -type f | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "Aucun APK trouvé"
+            exit 1
+          fi
+          cp "$APK" "Mes_Comptes_${{ steps.version.outputs.version }}_android-universal.apk"
+
+      - name: Joindre l'APK à la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          files: Mes_Comptes_${{ steps.version.outputs.version }}_android-universal.apk
+          fail_on_unmatched_files: true

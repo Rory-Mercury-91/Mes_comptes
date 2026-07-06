@@ -1,0 +1,29 @@
+---
+description: Workflow Git, commits réguliers et releases
+alwaysApply: true
+---
+
+# Git et GitHub
+
+## Commits
+- Commits **fréquents et atomiques** (une feature ou fix par commit).
+- Format : impératif français, 72 caractères max.
+  - ✅ `Ajoute la sélection de profil utilisateur`
+  - ✅ `Configure le plugin updater Tauri`
+  - ❌ `fix` / `wip` / `updates`
+
+## Branches
+- `main` : stable, releases uniquement.
+- Feature branches : `feature/add-transaction-form`.
+
+## Releases
+- Tag `vX.Y.Z` → GitHub Release → binaires desktop + APK.
+- `CHANGELOG.md` mis à jour à chaque release mineure.
+
+## Secrets
+- Ne jamais committer `.env`, clés Supabase `service_role`, clés de signature updater.
+- Fournir `.env.example` avec les clés attendues (sans valeurs).
+
+## CI
+- GitHub Actions : lint + build sur chaque push vers `main` / PR.
+- Publish release sur tag uniquement.

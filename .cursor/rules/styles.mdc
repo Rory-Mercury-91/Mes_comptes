@@ -1,0 +1,21 @@
+---
+description: Tokens CSS globaux et feuilles par écran
+globs: "**/*.{css,tsx}"
+alwaysApply: false
+---
+
+# Feuilles de style
+
+## Tokens globaux
+- Variables de thème dans `src/styles/tokens.css` (`--primary`, `--surface`, `--background`, etc.).
+- Reset et scrollbar dans `src/styles/global.css`.
+- Ne pas disperser des couleurs en dur si une variable existe.
+
+## Un CSS par écran / modale
+- Chaque page : `NomPage.css` importée uniquement par ce composant.
+- Chaque modale : `NomModal.css` dans son dossier.
+- Styles partagés : `tokens.css` / `global.css`, pas de duplication.
+
+## Cohérence visuelle
+- Thème sombre par défaut, aligné sur Nexus / Mangatheque.
+- Layout : sidebar gauche + zone principale ; responsive pour Android.

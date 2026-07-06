@@ -1,0 +1,44 @@
+.home-page h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.home-page-lead {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  max-width: 42rem;
+}
+
+.home-page-status {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  max-width: 32rem;
+}
+
+.home-page-status h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.home-page-status ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.home-page-status li {
+  margin-bottom: 0.35rem;
+}
+
+.status-ok {
+  color: #4ade80;
+}
+
+.status-warn {
+  color: #fbbf24;
+}
+
+.status-pending {
+  color: var(--text-muted);
+}

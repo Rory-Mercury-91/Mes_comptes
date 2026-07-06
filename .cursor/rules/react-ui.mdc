@@ -1,0 +1,27 @@
+---
+description: Composants React et interface utilisateur en français
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# Composants React
+
+## UI en français
+- Tout texte visible par l'utilisateur est en français.
+- `aria-label`, titres de modales, messages d'erreur affichés : français.
+
+## Patterns
+- Composants fonctionnels uniquement.
+- Props typées avec interface dédiée (`AccountCardProps`).
+- Logique extraite dans des hooks (`useAccounts`, `useActiveProfile`).
+- CSS co-localisé (`AccountCard.css`) ; variables de thème dans `src/styles/tokens.css`.
+
+## Profils utilisateurs
+- Un **profil** = contexte de suivi (ex. Rory, conjoint, foyer).
+- Le profil actif est persisté localement et filtre les données Supabase.
+- Changement de profil visible dans le layout (header ou sidebar).
+
+## Accessibilité
+- Boutons avec libellé explicite (pas d'icône seule sans `aria-label`).
+- Focus piégé dans les modales ouvertes.
+- Montants et dates formatés en locale `fr-FR`.

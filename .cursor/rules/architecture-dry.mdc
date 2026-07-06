@@ -1,0 +1,36 @@
+---
+description: Architecture modulaire, DRY et limite de taille des fichiers
+alwaysApply: true
+---
+
+# Architecture et DRY
+
+## Limite de taille
+- **Aucun fichier ne doit dépasser 1000 lignes.**
+- Cible idéale : **< 400 lignes** par fichier.
+- Si un fichier approche 300 lignes, extraire hooks, sous-composants ou services.
+
+## Avant d'écrire du nouveau code
+1. Chercher dans `src/components/`, `src/hooks/`, `src/utils/`, `src/services/`.
+2. Chercher les commandes Tauri dans `src-tauri/src/`.
+3. Réutiliser ou étendre l'existant ; créer du partagé seulement si rien ne convient.
+
+## Structure cible
+```
+src/
+  components/   # UI réutilisable (common/, layout/)
+  features/     # Logique métier par domaine (profiles/, accounts/, transactions/)
+  hooks/        # Hooks React partagés
+  services/     # Accès Supabase et logique async
+  pages/        # Écrans fins (composition uniquement)
+  types/        # Types TypeScript partagés
+  lib/          # Utilitaires transverses (supabaseClient, platform, env)
+  styles/       # tokens.css, global.css
+src-tauri/src/  # Modules Rust (pas un seul main.rs monolithique)
+supabase/migrations/  # Migrations SQL versionnées
+```
+
+## Règles de découpage
+- Une page = composition ; pas de logique métier lourde inline.
+- Un service = un domaine (`accountService`, `transactionService`, `profileService`).
+- S'inspirer des patterns Mangatheque / Nexus-Tauri, réécrire minimal sans copier-coller.

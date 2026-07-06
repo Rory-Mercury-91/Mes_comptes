@@ -1,0 +1,23 @@
+---
+description: Langue, communication et conventions de nommage Mes Comptes
+alwaysApply: true
+---
+
+# Langue et conventions
+
+## Communication avec l'utilisateur
+- Toujours répondre en **français**.
+
+## Code et UI
+- **UI visible** (labels, boutons, toasts, modales, placeholders) : français.
+- **Commentaires** dans le code : français.
+- **Identifiants techniques** (variables, fonctions, types, fichiers) : anglais.
+
+## Documentation technique
+- Chaque fonction exportée ou non triviale doit avoir une **JSDoc** en français :
+  - `@param`, `@returns`, `@throws` si pertinent
+  - Une ligne `@description` claire sur le rôle métier
+
+## Messages
+- Erreurs utilisateur et logs console : français.
+- Messages de commit : français, impératif court (« Ajoute… », « Corrige… »).

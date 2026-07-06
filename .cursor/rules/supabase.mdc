@@ -1,0 +1,32 @@
+---
+description: Schéma Supabase, migrations et sécurité RLS
+globs: "supabase/**"
+alwaysApply: false
+---
+
+# Supabase
+
+## Projet
+- ID : `karjavjcevpfeojkwywy`
+- URL : `https://karjavjcevpfeojkwywy.supabase.co`
+- Client : uniquement la clé `anon` via `VITE_SUPABASE_ANON_KEY`.
+
+## Migrations
+- Un fichier par migration : `YYYYMMDDHHMMSS_description.sql`.
+- Schéma initial minimal avant d'ajouter de la complexité.
+- Pas d'empilement de patches ad hoc : une migration = un changement cohérent.
+
+## Sécurité
+- **RLS activé** sur toutes les tables utilisateur.
+- Jamais de clé `service_role` dans le client Tauri/React.
+- Variables sensibles dans `.env` (jamais commitées).
+
+## Modèle de données cible (v1)
+- `profiles` — profils utilisateur (nom, couleur, icône, ordre d'affichage)
+- `accounts` — comptes bancaires / épargne / espèces liés à un profil
+- `categories` — catégories de dépenses / revenus
+- `transactions` — mouvements (montant, date, libellé, catégorie, compte)
+- `account_balances` ou solde calculé côté TS selon le choix d'implémentation
+
+## Types
+- Maintenir les types TS alignés sur le schéma (`types/database.ts`).
