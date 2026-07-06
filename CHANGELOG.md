@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.1] — 2026-07-06
+
+### Corrigé
+- Alignement des numéros de version (`package.json`, Tauri, Cargo) pour l'updater et les releases
+
 ## [0.1.0] — 2026-07-06
 
 ### Ajouté

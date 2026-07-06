@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
+import { getAppVersion } from "@/lib/appVersion";
 import "./HomePage.css";
 
 /**
@@ -12,6 +13,7 @@ export function HomePage() {
       <h1>Bienvenue</h1>
       <p className="home-page-lead">
         Application de suivi de comptes avec profils utilisateurs — desktop et Android.
+        Version {getAppVersion()} prête pour le test de mise à jour automatique.
       </p>
 
       <div className="home-page-status">

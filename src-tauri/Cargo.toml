@@ -1,6 +1,6 @@
 [package]
 name = "mes-comptes"
-version = "0.1.0"
+version = "0.1.1"
 description = "Mes Comptes — suivi de comptes et finances par profil utilisateur"
 authors = ["Rory Mercury 91"]
 edition = "2021"
