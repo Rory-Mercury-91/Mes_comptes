@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3] — 2026-07-07
+
+### Corrigé
+- Signature Android release (APK signé publié, plus d'APK non signé)
+- Détection MAJ Android via `latest.json` (aligné sur le desktop)
+
 ## [0.1.2] — 2026-07-07
 
 ### Corrigé

@@ -2,6 +2,37 @@ import { getAppVersion } from "@/lib/appVersion";
 import { isAndroidRuntime, isDesktopRuntime } from "@/lib/platform";
 
 const GITHUB_REPO = "Rory-Mercury-91/Mes_comptes";
+const GITHUB_RELEASES_BASE = `https://github.com/${GITHUB_REPO}/releases`;
+const LATEST_JSON_URL = `${GITHUB_RELEASES_BASE}/latest/download/latest.json`;
+
+type LatestJsonPayload = {
+  version?: string;
+  notes?: string;
+};
+
+/**
+ * @description Télécharge et parse le latest.json de la release GitHub courante.
+ */
+async function fetchLatestReleaseJson(): Promise<LatestJsonPayload | null> {
+  try {
+    const response = await fetch(LATEST_JSON_URL);
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as LatestJsonPayload;
+  } catch (error) {
+    console.warn("Lecture latest.json impossible :", error);
+    return null;
+  }
+}
+
+/**
+ * @description Construit l'URL de téléchargement de l'APK Android pour une version donnée.
+ */
+function buildAndroidApkDownloadUrl(version: string): string {
+  return `${GITHUB_RELEASES_BASE}/download/v${version}/Mes_Comptes_${version}_android-universal.apk`;
+}
 
 export type UpdateInfo =
   | { kind: "desktop"; version: string; notes?: string }
@@ -58,7 +89,7 @@ export async function checkDesktopUpdate(): Promise<UpdateInfo | null> {
 }
 
 /**
- * @description Vérifie les mises à jour Android via l'API GitHub Releases.
+ * @description Vérifie les mises à jour Android via latest.json (même source que le desktop).
  */
 export async function checkAndroidUpdate(): Promise<UpdateInfo | null> {
   if (!isAndroidRuntime()) {
@@ -66,48 +97,19 @@ export async function checkAndroidUpdate(): Promise<UpdateInfo | null> {
   }
 
   const current = getAppVersion();
+  const latestRelease = await fetchLatestReleaseJson();
+  const latestVersion = latestRelease?.version?.replace(/^v/i, "") ?? "";
 
-  try {
-    const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-      { headers: { Accept: "application/vnd.github+json" } },
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const payload = (await response.json()) as {
-      tag_name?: string;
-      body?: string;
-      assets?: Array<{ name?: string; browser_download_url?: string }>;
-    };
-
-    const latestVersion = payload.tag_name?.replace(/^v/i, "") ?? "";
-    if (!latestVersion || !isNewerVersion(latestVersion, current)) {
-      return null;
-    }
-
-    const apkAsset = payload.assets?.find(
-      (asset) =>
-        asset.name?.toLowerCase().includes("android") &&
-        asset.name?.toLowerCase().endsWith(".apk"),
-    );
-
-    if (!apkAsset?.browser_download_url) {
-      return null;
-    }
-
-    return {
-      kind: "android",
-      version: latestVersion,
-      downloadUrl: apkAsset.browser_download_url,
-      notes: payload.body ?? undefined,
-    };
-  } catch (error) {
-    console.warn("Vérification mise à jour Android impossible :", error);
+  if (!latestVersion || !isNewerVersion(latestVersion, current)) {
     return null;
   }
+
+  return {
+    kind: "android",
+    version: latestVersion,
+    downloadUrl: buildAndroidApkDownloadUrl(latestVersion),
+    notes: latestRelease?.notes ?? undefined,
+  };
 }
 
 /**

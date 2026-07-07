@@ -154,14 +154,26 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      - name: Vérifier que l'APK release est signé
+        run: |
+          APK="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
+          if [ ! -f "$APK" ]; then
+            echo "::error::APK signé introuvable : $APK"
+            exit 1
+          fi
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::apksigner introuvable dans Android SDK"
+            exit 1
+          fi
+          "$APKSIGNER" verify --verbose "$APK"
+
       - name: Publier l'APK en artifact
         uses: actions/upload-artifact@v4
         with:
           name: mes-comptes-android-apk
           if-no-files-found: error
-          path: |
-            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
-            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
 
   attach-android:
     name: Joindre l'APK à la release GitHub
@@ -185,9 +197,9 @@ jobs:
 
       - name: Renommer l'APK
         run: |
-          APK=$(find apk -name "*.apk" -type f | head -n 1)
-          if [ -z "$APK" ]; then
-            echo "Aucun APK trouvé"
+          APK="apk/app-universal-release.apk"
+          if [ ! -f "$APK" ]; then
+            echo "::error::APK signé absent dans l'artifact"
             exit 1
           fi
           cp "$APK" "Mes_Comptes_${{ steps.version.outputs.version }}_android-universal.apk"
