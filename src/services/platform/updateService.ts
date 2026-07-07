@@ -11,11 +11,12 @@ type LatestJsonPayload = {
 };
 
 /**
- * @description Télécharge et parse le latest.json de la release GitHub courante.
+ * @description Télécharge et parse le latest.json via le plugin HTTP Tauri (contourne CORS de la WebView Android).
  */
 async function fetchLatestReleaseJson(): Promise<LatestJsonPayload | null> {
   try {
-    const response = await fetch(LATEST_JSON_URL);
+    const { fetch: tauriFetch } = await import("@tauri-apps/plugin-http");
+    const response = await tauriFetch(LATEST_JSON_URL, { method: "GET" });
     if (!response.ok) {
       return null;
     }

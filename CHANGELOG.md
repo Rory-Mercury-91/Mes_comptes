@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.5] — 2026-07-07
+
+### Corrigé
+- Détection MAJ Android : `latest.json` récupéré via le plugin HTTP Tauri (contourne le blocage CORS de la WebView)
+
 ## [0.1.4] — 2026-07-07
 
 ### Ajouté
