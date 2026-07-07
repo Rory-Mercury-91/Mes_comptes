@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4] — 2026-07-07
+
+### Ajouté
+- Safe areas Android (viewport-fit, bandeaux haut/bas comme Mangathèque)
+
+### Modifié
+- Layout mobile : hauteur 100dvh, padding navigation système, en-tête sous encoche
+
 ## [0.1.3] — 2026-07-07
 
 ### Corrigé

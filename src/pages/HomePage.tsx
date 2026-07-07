@@ -12,8 +12,8 @@ export function HomePage() {
     <section className="home-page">
       <h1>Bienvenue</h1>
       <p className="home-page-lead">
-        Application de suivi de comptes avec profils utilisateurs — desktop et Android.
-        Version {getAppVersion()} prête pour le test de mise à jour automatique.
+        Squelette mobile calibré (safe areas) — version {getAppVersion()} prête pour le
+        test de mise à jour Android.
       </p>
 
       <div className="home-page-status">

@@ -1,18 +1,31 @@
+import { useLayoutEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Wallet } from "lucide-react";
 import { UpdateBanner } from "@/components/common/UpdateBanner";
 import { useAppUpdater } from "@/hooks/useAppUpdater";
 import { getAppVersion } from "@/lib/appVersion";
+import { isAndroidRuntime, isMobileRuntime } from "@/lib/platform";
 import "./AppLayout.css";
 
 /**
- * @description Layout principal avec sidebar et bandeau de mise à jour.
+ * @description Layout principal avec sidebar desktop et en-tête compact mobile (safe areas).
  */
 export function AppLayout() {
+  const mobile = isMobileRuntime();
   const { updateInfo, installing, applyUpdate, dismiss } = useAppUpdater();
 
+  useLayoutEffect(() => {
+    const android = isAndroidRuntime();
+    document.documentElement.classList.toggle("runtime-android", android);
+    return () => document.documentElement.classList.remove("runtime-android");
+  }, []);
+
+  const layoutClass = ["app-layout", mobile ? "app-layout--mobile" : ""]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="app-layout">
+    <div className={layoutClass}>
       {updateInfo ? (
         <UpdateBanner
           version={updateInfo.version}
