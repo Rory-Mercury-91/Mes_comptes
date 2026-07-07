@@ -12,8 +12,8 @@ export function HomePage() {
     <section className="home-page">
       <h1>Bienvenue</h1>
       <p className="home-page-lead">
-        Squelette mobile calibré (safe areas) — version {getAppVersion()} prête pour le
-        test de mise à jour Android.
+        Application de suivi de comptes avec profils utilisateurs — desktop et Android
+        (version {getAppVersion()}).
       </p>
 
       <div className="home-page-status">

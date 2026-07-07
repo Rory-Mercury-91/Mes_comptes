@@ -1,7 +1,7 @@
 {
   "name": "mes-comptes",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.1.0",
   "type": "module",
   "description": "Mes Comptes — suivi de comptes et finances par profil utilisateur",
   "author": "Rory Mercury 91",
