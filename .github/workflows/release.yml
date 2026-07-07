@@ -173,10 +173,14 @@ jobs:
           name: mes-comptes-android-apk
           path: apk
 
-      - name: Déterminer la version
+      - name: Déterminer la version applicative
         id: version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ needs.build-desktop.outputs.appVersion }}"
+          if [ -z "$VERSION" ]; then
+            echo "::error::appVersion introuvable depuis build-desktop."
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Renommer l'APK

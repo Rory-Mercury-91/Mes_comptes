@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] — 2026-07-07
+
+### Corrigé
+- Workflow release : l'APK Android rejoint la même release que le desktop (`appVersion`)
+- Évite une release « latest » sans `latest.json` qui bloquait l'updater
+
 ## [0.1.1] — 2026-07-06
 
 ### Corrigé

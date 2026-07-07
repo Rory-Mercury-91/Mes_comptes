@@ -26,3 +26,4 @@ alwaysApply: true
 - Repo : `Rory-Mercury-91/Mes_comptes`
 - Actions : lint, build desktop, build APK, publish release.
 - Tags sémantiques `vX.Y.Z` pour déclencher les releases et mises à jour.
+- **Le tag Git doit toujours correspondre à la version dans `package.json` / `tauri.conf.json`.**
