@@ -1041,7 +1041,7 @@
           labelInput.type = "text";
           labelInput.className = "field-label-input";
           labelInput.value = field.label;
-          labelInput.placeholder = field.type === "notice" ? "Libellé interne (non affiché)" : "Libellé du champ";
+          labelInput.placeholder = "Libellé du champ";
           labelInput.title = "Libellé du champ";
           labelInput.disabled = field.type === "notice";
           labelInput.addEventListener("input", () => {
@@ -1249,7 +1249,7 @@
       const isNotice = document.getElementById("fieldType").value === "notice";
       document.getElementById("fieldWrapAlarmsWrap").style.display = isNotice ? "flex" : "none";
       const labelInput = document.getElementById("fieldLabel");
-      labelInput.placeholder = isNotice ? "Libellé interne (non affiché dans le HTML)" : "Libellé du champ";
+      labelInput.placeholder = "Libellé du champ";
     }
 
     /* --- Modale : ajout de champ --- */
