@@ -971,9 +971,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v9";
-    const APP_VERSION = "2.7.4";
-    const APP_BUILD = "20260708e";
+    const STORAGE_KEY = "generateur-info-video-v10";
+    const APP_VERSION = "2.7.5";
+    const APP_BUILD = "20260708f";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1278,6 +1278,7 @@
         label: "",
         value: "",
         type: "normal",
+        multiline: false,
         wrapAlarms: true,
         alarmImageSrc: DEFAULT_ALARM_IMG,
         ...(overrides || {}),
@@ -1362,7 +1363,7 @@
                 type: "notice",
                 wrapAlarms: true,
               }),
-              makeField({ label: "Info.", value: "" }),
+              makeField({ label: "Info.", value: "", multiline: true }),
             ],
           }),
           makeSection({
@@ -1428,6 +1429,7 @@
             label: f.label || "",
             value: f.value || "",
             type: f.type === "notice" ? "notice" : "normal",
+            multiline: !!(f.multiline || (/^info\.?$/i.test(f.label || "") && f.type !== "notice")),
             wrapAlarms: f.wrapAlarms !== false,
             alarmImageSrc: f.alarmImageSrc || DEFAULT_ALARM_IMG,
           })),
@@ -1524,7 +1526,11 @@
      */
     function renderFieldValue(field) {
       if (containsHtml(field.value)) return field.value;
-      return escapeHtml(field.value);
+      const text = escapeHtml(field.value);
+      if (field.multiline) {
+        return text.replace(/\r\n/g, "\n").split("\n").join("<br>");
+      }
+      return text;
     }
 
     /**
@@ -1761,7 +1767,7 @@
 
         section.fields.forEach((field, fIdx) => {
           const row = document.createElement("div");
-          row.className = "field-row" + (field.type === "notice" ? " notice-row" : "");
+          row.className = "field-row" + (field.type === "notice" ? " notice-row" : "") + (field.multiline ? " multiline-row" : "");
 
           const moveBtns = document.createElement("div");
           moveBtns.className = "field-move-btns";
@@ -1812,11 +1818,16 @@
             updateOutput();
           });
 
-          const input = document.createElement("input");
-          input.type = "text";
+          const input = field.multiline
+            ? document.createElement("textarea")
+            : document.createElement("input");
+          if (!field.multiline) input.type = "text";
+          else input.className = "field-value-input";
           input.value = field.value;
           input.placeholder = "Saisir la valeur";
-          input.title = "Valeur du champ (HTML autorisé via + Image)";
+          input.title = field.multiline
+            ? "Valeur du champ (Entrée = retour à la ligne)"
+            : "Valeur du champ (HTML autorisé via + Image)";
           input.addEventListener("input", () => {
             field.value = input.value;
             saveDoc();
