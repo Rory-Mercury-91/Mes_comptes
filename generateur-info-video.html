@@ -118,41 +118,56 @@
       border-color: #5c3535;
     }
 
-    .video-link-block {
-      margin: 1rem 0;
+    .form-rows {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-    }
-
-    .video-link-block .url-block {
-      margin: 0;
-    }
-
-    .url-block {
-      display: grid;
-      grid-template-columns: 110px 1fr;
-      gap: 0.5rem;
-      align-items: center;
-      padding: 0.6rem;
-      border: 1px solid #2f4a5e;
-      border-radius: 6px;
-      background: #1a2732;
       margin: 1rem 0;
     }
 
-    .url-block label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--muted);
+    .form-row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
     }
 
-    .url-block input {
+    .form-row label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .form-row input,
+    .form-row select {
       width: 100%;
       padding: 0.4rem 0.55rem;
       border: 1px solid var(--border);
       border-radius: 4px;
       font-size: 0.875rem;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .mode-switch {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      flex: 1 1 220px;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
     }
 
     .section-block {
@@ -704,47 +719,63 @@
 <body>
   <header>
     <h1>Générateur Info Vidéo <span id="appVersion" style="font-size:0.75em;color:var(--muted);font-weight:normal;"></span></h1>
-    <p>Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.</p>
+    <p id="headerDesc">Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.</p>
   </header>
 
   <main>
     <section class="card">
-      <div class="panel-header">
-        <h2>Sections et champs</h2>
-        <div class="fields-toolbar">
-          <button type="button" class="btn-primary" id="btnAddSection">+ Ajouter une section</button>
-          <button type="button" class="btn-primary" id="btnAddField">+ Ajouter un champ</button>
-          <button type="button" id="btnReset">Réinitialiser</button>
-        </div>
+      <div class="mode-switch">
+        <button type="button" class="mode-btn active" id="btnModeVideo">Générateur consigne vidéo</button>
+        <button type="button" class="mode-btn" id="btnModeSimple">Générateur remarque simple</button>
       </div>
 
-      <div class="video-link-block">
-        <div class="url-block">
-          <label for="urlInput">URL vidéo</label>
-          <input type="url" id="urlInput" placeholder="https://..." />
+      <div id="videoModePanel">
+        <div class="panel-header">
+          <h2 id="mainCardTitle">Sections et champs</h2>
+          <div class="fields-toolbar">
+            <button type="button" class="btn-primary" id="btnAddSection">+ Ajouter une section</button>
+            <button type="button" class="btn-primary" id="btnAddField">+ Ajouter un champ</button>
+            <button type="button" id="btnReset">Réinitialiser</button>
+          </div>
         </div>
-        <div class="url-block">
-          <label for="linkTextInput">Texte du lien</label>
-          <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
+
+        <div class="form-rows">
+          <div class="form-row">
+            <label for="urlInput">URL vidéo</label>
+            <input type="url" id="urlInput" placeholder="https://..." />
+          </div>
+          <div class="form-row">
+            <label for="linkTextInput">Texte du lien</label>
+            <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
+          </div>
         </div>
+
+        <div id="sectionsContainer"></div>
+
+        <p class="hint" id="videoHint">
+          Chaque section a un titre et un type d'affichage : <strong>Inline</strong> (une ligne par champ)
+          ou <strong>Liste</strong> (puces &lt;li&gt;). Utilisez les flèches <strong>▲ ▼</strong> pour
+          réordonner les champs. Le type <strong>Consigne importante</strong> génère un bandeau rouge.
+          Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
+          Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour un bloc
+          &lt;details&gt;/&lt;summary&gt;. Couleurs et styles : panneau <strong>Mise en forme</strong>.
+        </p>
       </div>
 
-      <div id="sectionsContainer"></div>
-
-      <p class="hint">
-        Chaque section a un titre et un type d'affichage : <strong>Inline</strong> (une ligne par champ)
-        ou <strong>Liste</strong> (puces &lt;li&gt;) ou <strong>Texte libre</strong> (éditeur enrichi).
-        Utilisez les flèches <strong>▲ ▼</strong> pour
-        réordonner les champs (l'ordre à l'écran = l'ordre dans le HTML généré). Le type
-        <strong>Consigne importante</strong> génère un bandeau rouge avec icônes d'alarme.
-        Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
-        Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour générer un bloc
-        &lt;details&gt;/&lt;summary&gt;. Les sections d'origine restent toujours visibles.
-        Couleurs et styles : panneau <strong>Mise en forme</strong> (titres, summary, libellés…).
-      </p>
+      <div id="simpleModePanel" hidden>
+        <div class="panel-header">
+          <h2>Texte de la remarque</h2>
+          <button type="button" id="btnResetSimple">Réinitialiser</button>
+        </div>
+        <p class="hint">
+          Rédigez votre remarque avec l'éditeur ci-dessous. Le HTML généré contiendra
+          <strong>uniquement ce texte</strong>, sans sections ni lien vidéo.
+        </p>
+        <div id="simpleEditorHost"></div>
+      </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="stylesCard">
       <div class="panel-header">
         <h2>Mise en forme</h2>
         <button type="button" id="btnResetStyles">Réinitialiser la mise en forme</button>
@@ -847,8 +878,7 @@
       <h3>Ajouter une section</h3>
       <p class="modal-desc">
         La section sera ajoutée à la suite des sections existantes. Seules les sections
-        ajoutées peuvent être rendues réductibles. Le type <strong>Texte libre</strong>
-        permet de rédiger un contenu enrichi (gras, couleurs, listes…).
+        ajoutées peuvent être rendues réductibles.
       </p>
 
       <div class="modal-field">
@@ -861,7 +891,6 @@
         <select id="sectionLayout">
           <option value="inline">Lignes (inline)</option>
           <option value="list">Liste à puces</option>
-          <option value="richtext">Texte libre (éditeur)</option>
         </select>
       </div>
 
@@ -900,8 +929,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v8";
-    const APP_VERSION = "2.5";
+    const STORAGE_KEY = "generateur-info-video-v9";
+    const APP_VERSION = "2.6";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -938,7 +967,6 @@
         summaryText: DEFAULT_SUMMARY_TEXT,
         openByDefault: false,
         titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
-        content: "",
         fields: [],
         ...(overrides || {}),
       };
@@ -962,7 +990,6 @@
      */
     function layoutLabel(layout) {
       if (layout === "list") return "Liste";
-      if (layout === "richtext") return "Texte libre";
       return "Inline";
     }
 
@@ -1036,26 +1063,22 @@
     }
 
     /**
-     * Crée l'éditeur de texte libre pour une section.
-     * @param {object} section Section richtext
+     * Crée l'éditeur de texte libre.
+     * @param {Function} getContent Lecture du contenu HTML
+     * @param {Function} setContent Enregistrement du contenu HTML
      * @returns {HTMLElement} Conteneur complet
      */
-    function buildRichTextEditor(section) {
+    function buildRichTextEditor(getContent, setContent) {
       const wrap = document.createElement("div");
       wrap.className = "richtext-wrap";
-
-      const hint = document.createElement("p");
-      hint.className = "richtext-hint";
-      hint.textContent = "Sélectionnez du texte puis utilisez la barre d'outils (gras, couleur, listes…). Laissez le titre vide pour n'afficher que le contenu.";
 
       const editor = document.createElement("div");
       editor.className = "richtext-editor";
       editor.contentEditable = "true";
-      editor.innerHTML = section.content || "";
-      editor.setAttribute("data-placeholder", "Saisir votre texte ici…");
+      editor.innerHTML = getContent() || "";
 
       const sync = () => {
-        section.content = editor.innerHTML;
+        setContent(editor.innerHTML);
         saveDoc();
         updateOutput();
       };
@@ -1065,7 +1088,52 @@
 
       wrap.appendChild(buildRichTextToolbar(editor, sync));
       wrap.appendChild(editor);
-      return { wrap, hint };
+      return wrap;
+    }
+
+    /** @type {boolean} Éditeur remarque simple déjà monté */
+    let simpleEditorMounted = false;
+
+    /**
+     * Affiche ou masque les panneaux selon le mode actif.
+     */
+    function applyModeUI() {
+      const isSimple = doc.mode === "simple";
+      document.getElementById("videoModePanel").hidden = isSimple;
+      document.getElementById("simpleModePanel").hidden = !isSimple;
+      document.getElementById("stylesCard").hidden = isSimple;
+      document.getElementById("btnModeVideo").classList.toggle("active", !isSimple);
+      document.getElementById("btnModeSimple").classList.toggle("active", isSimple);
+      document.getElementById("headerDesc").textContent = isSimple
+        ? "Rédigez une remarque enrichie. Le HTML généré contient uniquement ce texte."
+        : "Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.";
+    }
+
+    /**
+     * Monte l'éditeur du mode remarque simple.
+     */
+    function mountSimpleEditor() {
+      const host = document.getElementById("simpleEditorHost");
+      host.innerHTML = "";
+      host.appendChild(buildRichTextEditor(
+        () => doc.simpleContent,
+        (html) => { doc.simpleContent = html; }
+      ));
+      simpleEditorMounted = true;
+    }
+
+    /**
+     * Bascule entre les modes vidéo et remarque simple.
+     * @param {"video"|"simple"} mode Mode cible
+     */
+    function setMode(mode) {
+      doc.mode = mode === "simple" ? "simple" : "video";
+      if (doc.mode === "simple" && !simpleEditorMounted) {
+        mountSimpleEditor();
+      }
+      saveDoc();
+      applyModeUI();
+      updateOutput();
     }
 
     /**
@@ -1146,8 +1214,10 @@
      */
     function defaultDoc() {
       return {
+        mode: "video",
         url: "",
         linkText: DEFAULT_LINK_TEXT,
+        simpleContent: "",
         spacing: 0.3,
         sections: [
           makeSection({
@@ -1193,13 +1263,22 @@
      */
     function normalizeDoc(d) {
       const out = {
+        mode: d.mode === "simple" ? "simple" : "video",
         url: d.url || "",
         linkText: d.linkText || DEFAULT_LINK_TEXT,
+        simpleContent: d.simpleContent || "",
         spacing: typeof d.spacing === "number" ? d.spacing : 0.3,
         sections: [],
         styles: {},
       };
-      out.sections = (d.sections || []).map((s) => {
+
+      const rawSections = (d.sections || []).filter((s) => s.layout !== "richtext");
+      const legacyRich = (d.sections || []).find((s) => s.layout === "richtext");
+      if (!out.simpleContent && legacyRich?.content) {
+        out.simpleContent = legacyRich.content;
+      }
+
+      out.sections = rawSections.map((s) => {
         let rawFields = [...(s.fields || [])];
         if (rawFields.some((f) => typeof f.position === "number")) {
           rawFields.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
@@ -1207,13 +1286,12 @@
         return {
           id: s.id || uid(),
           title: s.title || "Section",
-          layout: s.layout === "list" ? "list" : s.layout === "richtext" ? "richtext" : "inline",
+          layout: s.layout === "list" ? "list" : "inline",
           isDefault: !!s.isDefault,
           collapsible: s.isDefault ? false : !!s.collapsible,
           summaryText: s.summaryText || DEFAULT_SUMMARY_TEXT,
           openByDefault: s.isDefault ? false : !!s.openByDefault,
           titleStyle: makeStyle(s.titleStyle || {}),
-          content: s.layout === "richtext" ? (s.content || "") : "",
           fields: rawFields.map((f) => ({
             id: f.id || uid(),
             label: f.label || "",
@@ -1368,10 +1446,6 @@
         ? "color: #000000; margin: 0"
         : `color: #000000; ${blockMargin()}`;
 
-      if (section.layout === "richtext") {
-        return `<div style="${wrapperStyle};">${section.content || ""}</div>`;
-      }
-
       if (section.layout === "list") {
         const lis = items.map((f) =>
           `    <li style="${blockMargin()};">${renderFieldHtml(f)}</li>`
@@ -1391,29 +1465,6 @@
      * @returns {string} HTML de la section
      */
     function renderSectionHtml(section) {
-      if (section.layout === "richtext") {
-        const content = (section.content || "").trim();
-        const hasTitle = (section.title || "").trim() !== "";
-        if (!content && !hasTitle) return "";
-
-        const titleHtml = hasTitle
-          ? `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`
-          : "";
-
-        if (!content) return titleHtml;
-
-        if (!section.collapsible) {
-          const body = renderSectionBodyHtml(section, [], false);
-          return titleHtml ? `${titleHtml}\n${body}` : body;
-        }
-
-        const openAttr = section.openByDefault ? " open" : "";
-        const summaryText = escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT);
-        const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer`;
-        const body = renderSectionBodyHtml(section, [], true);
-        return `${titleHtml ? titleHtml + "\n" : ""}<details${openAttr} style="${blockMargin()};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${body}\n</details>`;
-      }
-
       const titleHtml = `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
       const items = section.fields.filter((f) => f.value.trim() !== "");
 
@@ -1437,6 +1488,10 @@
     }
 
     function buildHtml() {
+      if (doc.mode === "simple") {
+        return (doc.simpleContent || "").trim();
+      }
+
       const url = doc.url;
       const parts = [];
       let linkRendered = false;
@@ -1572,14 +1627,6 @@
 
         const grid = document.createElement("div");
         grid.className = "fields-grid";
-
-        if (section.layout === "richtext") {
-          const { wrap, hint } = buildRichTextEditor(section);
-          block.appendChild(hint);
-          block.appendChild(wrap);
-          container.appendChild(block);
-          return;
-        }
 
         section.fields.forEach((field, fIdx) => {
           const row = document.createElement("div");
@@ -1843,13 +1890,12 @@
 
     /* --- Modale : ajout de champ --- */
     function openAddField(preselectSectionId) {
-      const eligible = doc.sections.filter((s) => s.layout !== "richtext");
-      if (eligible.length === 0) {
-        alert("Ajoutez d'abord une section classique (inline ou liste) pour y placer un champ.");
+      if (doc.sections.length === 0) {
+        alert("Ajoutez d'abord une section pour y placer un champ.");
         return;
       }
       const select = document.getElementById("fieldSection");
-      select.innerHTML = eligible
+      select.innerHTML = doc.sections
         .map((s) => `<option value="${s.id}">${escapeHtml(s.title || "Section")}</option>`)
         .join("");
       if (preselectSectionId) select.value = preselectSectionId;
@@ -1909,9 +1955,8 @@
 
     function confirmAddSection() {
       const title = document.getElementById("sectionTitle").value.trim();
-      const layoutVal = document.getElementById("sectionLayout").value;
-      const layout = layoutVal === "list" ? "list" : layoutVal === "richtext" ? "richtext" : "inline";
-      if (!title && layout !== "richtext") {
+      const layout = document.getElementById("sectionLayout").value === "list" ? "list" : "inline";
+      if (!title) {
         document.getElementById("sectionTitle").focus();
         return;
       }
@@ -1931,12 +1976,24 @@
     function resetAll() {
       if (!confirm("Réinitialiser toutes les sections, champs et mise en forme ?")) return;
       doc = defaultDoc();
+      simpleEditorMounted = false;
       saveDoc();
       document.getElementById("urlInput").value = doc.url;
       document.getElementById("linkTextInput").value = doc.linkText;
       document.getElementById("spacingInput").value = doc.spacing;
+      if (doc.mode === "simple") mountSimpleEditor();
+      applyModeUI();
       renderSections();
       renderStyleControls();
+    }
+
+    function resetSimple() {
+      if (!confirm("Effacer le texte de la remarque ?")) return;
+      doc.simpleContent = "";
+      simpleEditorMounted = false;
+      saveDoc();
+      mountSimpleEditor();
+      updateOutput();
     }
 
     async function copyHtml() {
@@ -1955,6 +2012,9 @@
     document.getElementById("btnAddSection").addEventListener("click", openAddSection);
     document.getElementById("btnAddField").addEventListener("click", () => openAddField(null));
     document.getElementById("btnReset").addEventListener("click", resetAll);
+    document.getElementById("btnResetSimple").addEventListener("click", resetSimple);
+    document.getElementById("btnModeVideo").addEventListener("click", () => setMode("video"));
+    document.getElementById("btnModeSimple").addEventListener("click", () => setMode("simple"));
     document.getElementById("btnCopy").addEventListener("click", copyHtml);
     document.getElementById("btnResetStyles").addEventListener("click", resetStyles);
 
@@ -2025,6 +2085,8 @@
 
     renderSections();
     renderStyleControls();
+    applyModeUI();
+    if (doc.mode === "simple") mountSimpleEditor();
   </script>
 </body>
 </html>
