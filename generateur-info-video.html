@@ -1035,9 +1035,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v17";
-    const APP_VERSION = "2.14";
-    const APP_BUILD = "20260708m";
+    const STORAGE_KEY = "generateur-info-video-v18";
+    const APP_VERSION = "2.15";
+    const APP_BUILD = "20260708n";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1046,10 +1046,21 @@
     // Couleur de fond de simulation de l'aperçu (préférence locale, hors HTML copié)
     let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
 
+    // Couleurs par défaut de la mise en forme (réinitialisation et nouveaux profils)
+    const DEFAULT_STYLE_COLORS = {
+      diversTitle: "#2E7D32",
+      link: "#D97B1C",
+      connexionTitle: "#2E86C1",
+      labels: "#000000",
+      notice: "#C62828",
+      summary: "#2E86C1",
+      bottomText: "#000000",
+    };
+
     // Couleurs de titre par défaut des sections d'origine (utilisées à la réinitialisation)
     const DEFAULT_TITLE_COLORS = {
-      sec_divers: "#F46C0B",
-      sec_connexion: "#2980b9",
+      sec_divers: DEFAULT_STYLE_COLORS.diversTitle,
+      sec_connexion: DEFAULT_STYLE_COLORS.connexionTitle,
     };
 
     /** @type {{ url: string, sections: any[], styles: any }} */
@@ -1073,7 +1084,7 @@
         collapsible: false,
         summaryText: DEFAULT_SUMMARY_TEXT,
         openByDefault: false,
-        titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
+        titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
         fields: [],
         ...(overrides || {}),
       };
@@ -1465,7 +1476,7 @@
         sections: [
           makeSection({
             id: "sec_divers", title: "Informations diverses", layout: "inline", isDefault: true,
-            titleStyle: makeStyle({ colorOn: true, colorValue: "#F46C0B", size: 1.2 }),
+            titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.diversTitle, size: 1.2 }),
             fields: [
               makeField({ label: "Code Inter", value: "" }),
               makeField({
@@ -1479,7 +1490,7 @@
           }),
           makeSection({
             id: "sec_connexion", title: "Information de connexion vidéo", layout: "list", isDefault: true,
-            titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
+            titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
             fields: [
               makeField({ label: "Adresse IP", value: "" }),
               makeField({ label: "Port", value: "" }),
@@ -1490,11 +1501,11 @@
           }),
         ],
         styles: {
-          link: makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1.2 }),
-          labels: makeStyle({ colorOn: false, colorValue: "#000000", size: 1 }),
-          notice: makeStyle({ colorOn: true, colorValue: "#F40B0B", size: 1.1, bold: true, underline: false }),
-          summary: makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1, bold: false, underline: false }),
-          bottomText: makeStyle({ colorOn: true, colorValue: "#000000", size: 1 }),
+          link: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true }),
+          labels: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
+          notice: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
+          summary: makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false }),
+          bottomText: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 }),
         },
       };
     }
@@ -1551,11 +1562,11 @@
       });
       const st = d.styles || {};
       out.styles = {
-        link: makeStyle(st.link || { size: 1.2 }),
-        labels: makeStyle(st.labels || { size: 1 }),
-        notice: makeStyle(st.notice || { colorOn: true, colorValue: "#F40B0B", size: 1.1, bold: true, underline: false }),
+        link: makeStyle(st.link || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2 }),
+        labels: makeStyle(st.labels || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
+        notice: makeStyle(st.notice || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
         summary: makeStyle(st.summary || { size: 1, bold: false, underline: false }),
-        bottomText: makeStyle(st.bottomText || { colorOn: true, colorValue: "#000000", size: 1 }),
+        bottomText: makeStyle(st.bottomText || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 }),
       };
 
       // Migration : ajoute la consigne importante dans la section d'origine si absente
@@ -2322,15 +2333,15 @@
       doc.sections.forEach((s) => {
         s.titleStyle = makeStyle({
           colorOn: true,
-          colorValue: DEFAULT_TITLE_COLORS[s.id] || "#2980b9",
+          colorValue: DEFAULT_TITLE_COLORS[s.id] || DEFAULT_STYLE_COLORS.connexionTitle,
           size: 1.2,
         });
       });
-      doc.styles.link = makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1.2 });
-      doc.styles.labels = makeStyle({ colorOn: false, colorValue: "#000000", size: 1 });
-      doc.styles.notice = makeStyle({ colorOn: true, colorValue: "#F40B0B", size: 1.1, bold: true, underline: false });
-      doc.styles.summary = makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1, bold: false, underline: false });
-      doc.styles.bottomText = makeStyle({ colorOn: true, colorValue: "#000000", size: 1 });
+      doc.styles.link = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true });
+      doc.styles.labels = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 });
+      doc.styles.notice = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false });
+      doc.styles.summary = makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false });
+      doc.styles.bottomText = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 });
       saveDoc();
       renderStyleControls();
       updateOutput();
