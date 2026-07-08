@@ -212,6 +212,75 @@
     .type-badge.list { background: #17331c; color: #7bc98a; }
     .type-badge.notice { background: #4a1515; color: #f47c7c; }
     .type-badge.collapsible { background: #2a2040; color: #b39ddb; }
+    .type-badge.richtext { background: #1a2a3a; color: #7eb8e8; }
+
+    .richtext-wrap {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .richtext-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .richtext-btn {
+      min-width: 34px;
+      height: 34px;
+      padding: 0 0.55rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .richtext-btn.italic-btn { font-style: italic; }
+    .richtext-btn.underline-btn { text-decoration: underline; }
+
+    .richtext-color {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0 0.25rem;
+    }
+
+    .richtext-color input[type="color"] {
+      width: 34px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    .richtext-editor {
+      min-height: 180px;
+      padding: 0.85rem;
+      color: #000000;
+      background: #ffffff;
+      font-family: "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      outline: none;
+    }
+
+    .richtext-editor:focus {
+      box-shadow: inset 0 0 0 2px var(--accent);
+    }
+
+    .richtext-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 0 0 0.5rem;
+    }
 
     .section-options {
       display: flex;
@@ -664,7 +733,8 @@
 
       <p class="hint">
         Chaque section a un titre et un type d'affichage : <strong>Inline</strong> (une ligne par champ)
-        ou <strong>Liste</strong> (puces &lt;li&gt;). Utilisez les flèches <strong>▲ ▼</strong> pour
+        ou <strong>Liste</strong> (puces &lt;li&gt;) ou <strong>Texte libre</strong> (éditeur enrichi).
+        Utilisez les flèches <strong>▲ ▼</strong> pour
         réordonner les champs (l'ordre à l'écran = l'ordre dans le HTML généré). Le type
         <strong>Consigne importante</strong> génère un bandeau rouge avec icônes d'alarme.
         Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
@@ -777,7 +847,8 @@
       <h3>Ajouter une section</h3>
       <p class="modal-desc">
         La section sera ajoutée à la suite des sections existantes. Seules les sections
-        ajoutées peuvent être rendues réductibles.
+        ajoutées peuvent être rendues réductibles. Le type <strong>Texte libre</strong>
+        permet de rédiger un contenu enrichi (gras, couleurs, listes…).
       </p>
 
       <div class="modal-field">
@@ -790,6 +861,7 @@
         <select id="sectionLayout">
           <option value="inline">Lignes (inline)</option>
           <option value="list">Liste à puces</option>
+          <option value="richtext">Texte libre (éditeur)</option>
         </select>
       </div>
 
@@ -828,8 +900,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v7";
-    const APP_VERSION = "2.4";
+    const STORAGE_KEY = "generateur-info-video-v8";
+    const APP_VERSION = "2.5";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -866,6 +938,7 @@
         summaryText: DEFAULT_SUMMARY_TEXT,
         openByDefault: false,
         titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
+        content: "",
         fields: [],
         ...(overrides || {}),
       };
@@ -880,6 +953,119 @@
       if (!enabled) {
         document.getElementById("sectionOpenByDefault").checked = false;
       }
+    }
+
+    /**
+     * Libellé affiché pour un type de section.
+     * @param {string} layout Type de section
+     * @returns {string} Libellé court
+     */
+    function layoutLabel(layout) {
+      if (layout === "list") return "Liste";
+      if (layout === "richtext") return "Texte libre";
+      return "Inline";
+    }
+
+    /**
+     * Construit la barre d'outils d'une section texte libre.
+     * @param {HTMLElement} editor Zone éditable
+     * @param {Function} onChange Callback après modification
+     * @returns {HTMLElement} Barre d'outils
+     */
+    function buildRichTextToolbar(editor, onChange) {
+      const toolbar = document.createElement("div");
+      toolbar.className = "richtext-toolbar";
+
+      const run = (cmd, value) => {
+        editor.focus();
+        document.execCommand(cmd, false, value ?? null);
+        onChange();
+      };
+
+      const addBtn = (label, cmd, className, title) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "richtext-btn" + (className ? " " + className : "");
+        btn.textContent = label;
+        btn.title = title;
+        btn.addEventListener("mousedown", (e) => e.preventDefault());
+        btn.addEventListener("click", () => run(cmd));
+        toolbar.appendChild(btn);
+      };
+
+      addBtn("G", "bold", "", "Gras");
+      addBtn("I", "italic", "italic-btn", "Italique");
+      addBtn("S", "underline", "underline-btn", "Souligné");
+      addBtn("•", "insertUnorderedList", "", "Liste à puces");
+      addBtn("1.", "insertOrderedList", "", "Liste numérotée");
+
+      const textColor = document.createElement("label");
+      textColor.className = "richtext-color";
+      textColor.title = "Couleur du texte";
+      textColor.appendChild(document.createTextNode("Couleur"));
+      const textColorInput = document.createElement("input");
+      textColorInput.type = "color";
+      textColorInput.value = "#000000";
+      textColorInput.addEventListener("mousedown", (e) => e.preventDefault());
+      textColorInput.addEventListener("input", (e) => run("foreColor", e.target.value));
+      textColor.appendChild(textColorInput);
+      toolbar.appendChild(textColor);
+
+      const bgColor = document.createElement("label");
+      bgColor.className = "richtext-color";
+      bgColor.title = "Surlignage";
+      bgColor.appendChild(document.createTextNode("Fond"));
+      const bgColorInput = document.createElement("input");
+      bgColorInput.type = "color";
+      bgColorInput.value = "#ffff00";
+      bgColorInput.addEventListener("mousedown", (e) => e.preventDefault());
+      bgColorInput.addEventListener("input", (e) => run("backColor", e.target.value));
+      bgColor.appendChild(bgColorInput);
+      toolbar.appendChild(bgColor);
+
+      const clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "richtext-btn";
+      clearBtn.textContent = "Effacer style";
+      clearBtn.title = "Retirer la mise en forme de la sélection";
+      clearBtn.addEventListener("mousedown", (e) => e.preventDefault());
+      clearBtn.addEventListener("click", () => run("removeFormat"));
+      toolbar.appendChild(clearBtn);
+
+      return toolbar;
+    }
+
+    /**
+     * Crée l'éditeur de texte libre pour une section.
+     * @param {object} section Section richtext
+     * @returns {HTMLElement} Conteneur complet
+     */
+    function buildRichTextEditor(section) {
+      const wrap = document.createElement("div");
+      wrap.className = "richtext-wrap";
+
+      const hint = document.createElement("p");
+      hint.className = "richtext-hint";
+      hint.textContent = "Sélectionnez du texte puis utilisez la barre d'outils (gras, couleur, listes…). Laissez le titre vide pour n'afficher que le contenu.";
+
+      const editor = document.createElement("div");
+      editor.className = "richtext-editor";
+      editor.contentEditable = "true";
+      editor.innerHTML = section.content || "";
+      editor.setAttribute("data-placeholder", "Saisir votre texte ici…");
+
+      const sync = () => {
+        section.content = editor.innerHTML;
+        saveDoc();
+        updateOutput();
+      };
+
+      editor.addEventListener("input", sync);
+      editor.addEventListener("blur", sync);
+
+      wrap.appendChild(buildRichTextToolbar(editor, sync));
+      wrap.appendChild(editor);
+      return { wrap, hint };
     }
 
     /**
@@ -1021,12 +1207,13 @@
         return {
           id: s.id || uid(),
           title: s.title || "Section",
-          layout: s.layout === "list" ? "list" : "inline",
+          layout: s.layout === "list" ? "list" : s.layout === "richtext" ? "richtext" : "inline",
           isDefault: !!s.isDefault,
           collapsible: s.isDefault ? false : !!s.collapsible,
           summaryText: s.summaryText || DEFAULT_SUMMARY_TEXT,
           openByDefault: s.isDefault ? false : !!s.openByDefault,
           titleStyle: makeStyle(s.titleStyle || {}),
+          content: s.layout === "richtext" ? (s.content || "") : "",
           fields: rawFields.map((f) => ({
             id: f.id || uid(),
             label: f.label || "",
@@ -1181,6 +1368,10 @@
         ? "color: #000000; margin: 0"
         : `color: #000000; ${blockMargin()}`;
 
+      if (section.layout === "richtext") {
+        return `<div style="${wrapperStyle};">${section.content || ""}</div>`;
+      }
+
       if (section.layout === "list") {
         const lis = items.map((f) =>
           `    <li style="${blockMargin()};">${renderFieldHtml(f)}</li>`
@@ -1200,6 +1391,29 @@
      * @returns {string} HTML de la section
      */
     function renderSectionHtml(section) {
+      if (section.layout === "richtext") {
+        const content = (section.content || "").trim();
+        const hasTitle = (section.title || "").trim() !== "";
+        if (!content && !hasTitle) return "";
+
+        const titleHtml = hasTitle
+          ? `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`
+          : "";
+
+        if (!content) return titleHtml;
+
+        if (!section.collapsible) {
+          const body = renderSectionBodyHtml(section, [], false);
+          return titleHtml ? `${titleHtml}\n${body}` : body;
+        }
+
+        const openAttr = section.openByDefault ? " open" : "";
+        const summaryText = escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT);
+        const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer`;
+        const body = renderSectionBodyHtml(section, [], true);
+        return `${titleHtml ? titleHtml + "\n" : ""}<details${openAttr} style="${blockMargin()};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${body}\n</details>`;
+      }
+
       const titleHtml = `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
       const items = section.fields.filter((f) => f.value.trim() !== "");
 
@@ -1279,7 +1493,7 @@
 
         const badge = document.createElement("span");
         badge.className = "type-badge " + section.layout;
-        badge.textContent = section.layout === "list" ? "Liste" : "Inline";
+        badge.textContent = layoutLabel(section.layout);
 
         const delBtn = document.createElement("button");
         delBtn.type = "button";
@@ -1358,6 +1572,14 @@
 
         const grid = document.createElement("div");
         grid.className = "fields-grid";
+
+        if (section.layout === "richtext") {
+          const { wrap, hint } = buildRichTextEditor(section);
+          block.appendChild(hint);
+          block.appendChild(wrap);
+          container.appendChild(block);
+          return;
+        }
 
         section.fields.forEach((field, fIdx) => {
           const row = document.createElement("div");
@@ -1621,12 +1843,13 @@
 
     /* --- Modale : ajout de champ --- */
     function openAddField(preselectSectionId) {
-      if (doc.sections.length === 0) {
-        alert("Ajoutez d'abord une section pour y placer un champ.");
+      const eligible = doc.sections.filter((s) => s.layout !== "richtext");
+      if (eligible.length === 0) {
+        alert("Ajoutez d'abord une section classique (inline ou liste) pour y placer un champ.");
         return;
       }
       const select = document.getElementById("fieldSection");
-      select.innerHTML = doc.sections
+      select.innerHTML = eligible
         .map((s) => `<option value="${s.id}">${escapeHtml(s.title || "Section")}</option>`)
         .join("");
       if (preselectSectionId) select.value = preselectSectionId;
@@ -1686,8 +1909,9 @@
 
     function confirmAddSection() {
       const title = document.getElementById("sectionTitle").value.trim();
-      const layout = document.getElementById("sectionLayout").value === "list" ? "list" : "inline";
-      if (!title) {
+      const layoutVal = document.getElementById("sectionLayout").value;
+      const layout = layoutVal === "list" ? "list" : layoutVal === "richtext" ? "richtext" : "inline";
+      if (!title && layout !== "richtext") {
         document.getElementById("sectionTitle").focus();
         return;
       }
