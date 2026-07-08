@@ -868,7 +868,7 @@
             Marge
             <input type="number" id="spacingInput" min="0" max="3" step="0.1"> em
           </label>
-          <span class="hint" style="margin: 0;">0 = lignes collées. Appliqué en style inline (prioritaire sur les classes CSS).</span>
+          <span class="hint" style="margin: 0;">0 = mode compact : lignes collées, sauts de ligne multiples fusionnés, interligne réduit.</span>
         </div>
       </div>
       <div id="stylesContainer"></div>
@@ -1010,9 +1010,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v12";
-    const APP_VERSION = "2.9";
-    const APP_BUILD = "20260708h";
+    const STORAGE_KEY = "generateur-info-video-v13";
+    const APP_VERSION = "2.10";
+    const APP_BUILD = "20260708i";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1554,12 +1554,40 @@
     }
 
     /**
-     * Renvoie la déclaration de marge basse inline selon l'espacement réglé.
-     * Les styles inline priment sur les classes CSS du logiciel de destination.
-     * @returns {string} Déclaration CSS de marge
+     * Indique si l'espacement demandé correspond au mode compact (lignes collées).
+     * @returns {boolean} Vrai lorsque l'espacement est nul ou quasi nul
      */
-    function blockMargin() {
-      return `margin: 0 0 ${doc.spacing}em 0`;
+    function isTightSpacing() {
+      return doc.spacing <= 0;
+    }
+
+    /**
+     * Fusionne les sauts de ligne et balises &lt;br&gt; consécutifs en un seul.
+     * @param {string} text Texte ou fragment HTML
+     * @returns {string} Texte normalisé
+     */
+    function collapseLineBreaks(text) {
+      return String(text)
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .replace(/\n[ \t]*\n+/g, "\n")
+        .replace(/(?:<br\s*\/?>\s*){2,}/gi, "<br>")
+        .replace(/^\n+|\n+$/g, "");
+    }
+
+    /**
+     * Renvoie les styles inline d'un bloc (marge, reset padding, interligne en mode compact).
+     * Les styles inline priment sur les classes CSS du logiciel de destination.
+     * @param {{ noBottom?: boolean }} [opts] noBottom : supprime la marge basse du bloc
+     * @returns {string} Déclaration CSS inline
+     */
+    function blockStyle(opts = {}) {
+      const bottom = opts.noBottom || isTightSpacing() ? 0 : doc.spacing;
+      const parts = [`margin: 0 0 ${bottom}em 0`, "padding: 0"];
+      if (isTightSpacing()) {
+        parts.push("line-height: 1.15");
+      }
+      return parts.join("; ");
     }
 
     /**
@@ -1568,10 +1596,10 @@
      * @returns {string} Fragment HTML
      */
     function renderFieldValue(field) {
-      if (containsHtml(field.value)) return field.value;
-      const text = escapeHtml(field.value);
+      if (containsHtml(field.value)) return collapseLineBreaks(field.value);
+      const text = escapeHtml(collapseLineBreaks(field.value));
       if (field.multiline) {
-        return text.replace(/\r\n/g, "\n").split("\n").join("<br>");
+        return text.split("\n").join("<br>");
       }
       return text;
     }
@@ -1622,20 +1650,28 @@
      * @returns {string} HTML du contenu
      */
     function renderSectionBodyHtml(section, items, insideDetails) {
+      const baseWrapper = "color: #000000; margin: 0; padding: 0";
       const wrapperStyle = insideDetails
-        ? "color: #000000; margin: 0"
-        : `color: #000000; ${blockMargin()}`;
+        ? baseWrapper + (isTightSpacing() ? "; line-height: 1.15" : "")
+        : baseWrapper + (isTightSpacing() ? "" : `; margin-bottom: ${doc.spacing}em`);
 
       if (section.layout === "list") {
-        const lis = items.map((f) =>
-          `    <li style="${blockMargin()};">${renderFieldHtml(f)}</li>`
-        );
-        return `<ul style="${wrapperStyle};">\n${lis.join("\n")}\n</ul>`;
+        const lis = items.map((f, i) => {
+          const noBottom = i === items.length - 1;
+          return `    <li style="${blockStyle({ noBottom })}; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`;
+        });
+        return `<ul style="${wrapperStyle}; list-style: disc inside;">\n${lis.join("\n")}\n</ul>`;
       }
 
-      const divs = items.map((f) =>
-        `    <div style="${blockMargin()};">${renderFieldHtml(f)}</div>`
-      );
+      if (isTightSpacing()) {
+        const lines = items.map((f) => renderFieldHtml(f));
+        return `<div style="${wrapperStyle};">\n${lines.join("<br>\n")}\n</div>`;
+      }
+
+      const divs = items.map((f, i) => {
+        const noBottom = i === items.length - 1;
+        return `    <div style="${blockStyle({ noBottom })};">${renderFieldHtml(f)}</div>`;
+      });
       return `<div style="${wrapperStyle};">\n${divs.join("\n")}\n</div>`;
     }
 
@@ -1645,7 +1681,7 @@
      * @returns {string} HTML de la section
      */
     function renderSectionHtml(section) {
-      const titleHtml = `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
+      const titleHtml = `<div style="${blockStyle({ noBottom: isTightSpacing() })};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
       const items = section.fields.filter((f) => f.value.trim() !== "");
 
       if (!section.collapsible) {
@@ -1655,16 +1691,16 @@
       const openAttr = section.openByDefault ? " open" : "";
       const summaryText = escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT);
       const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer`;
-      return `${titleHtml}\n<details${openAttr} style="${blockMargin()};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true)}\n</details>`;
+      return `${titleHtml}\n<details${openAttr} style="${blockStyle({ noBottom: isTightSpacing() })};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true)}\n</details>`;
     }
 
     function linkHtml(url) {
       const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
-      return `<div style="${blockMargin()};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a></div>`;
+      return `<div style="${blockStyle({ noBottom: isTightSpacing() })};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a></div>`;
     }
 
     function footerHtml(url) {
-      return `<div style="${blockMargin()};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0;">${escapeHtml(url)}</div>`;
+      return `<div style="${blockStyle({ noBottom: isTightSpacing() })};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`;
     }
 
     function buildHtml() {
