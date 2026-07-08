@@ -507,6 +507,29 @@
       display: none !important;
     }
 
+    .modal-panel[hidden],
+    .modal-field[hidden] {
+      display: none !important;
+    }
+
+    .modal-value-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+
+    .modal-value-row input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .modal-value-row .btn-img {
+      flex-shrink: 0;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+    }
+
     .modal label:not(.modal-check-row) {
       display: block;
       font-size: 0.85rem;
