@@ -772,8 +772,6 @@
           }),
           makeSection({
             id: "sec_connexion", title: "Information de connexion vidéo", layout: "list", isDefault: true,
-            collapsible: true,
-            summaryText: DEFAULT_SUMMARY_TEXT,
             titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
             fields: [
               makeField({ label: "Adresse IP", value: "" }),
@@ -1089,6 +1087,12 @@
 
         head.appendChild(titleInput);
         head.appendChild(badge);
+        if (section.collapsible) {
+          const collBadge = document.createElement("span");
+          collBadge.className = "type-badge collapsible";
+          collBadge.textContent = "Réductible";
+          head.appendChild(collBadge);
+        }
         head.appendChild(delBtn);
         block.appendChild(head);
 
