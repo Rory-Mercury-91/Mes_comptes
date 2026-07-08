@@ -1010,9 +1010,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v14";
-    const APP_VERSION = "2.11";
-    const APP_BUILD = "20260708j";
+    const STORAGE_KEY = "generateur-info-video-v15";
+    const APP_VERSION = "2.12";
+    const APP_BUILD = "20260708k";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1644,16 +1644,40 @@
 
     /**
      * Renvoie les styles du conteneur englobant une section entière.
+     * @param {{ afterFooter?: boolean }} [opts] afterFooter : section située après le texte d'aide
      * @returns {string} Déclaration CSS inline
      */
-    function sectionOuterStyle() {
+    function sectionOuterStyle(opts = {}) {
       const parts = ["margin: 0", "padding: 0", "color: #000000"];
       if (isTightSpacing()) {
         parts.push("line-height: 1.15");
       } else {
+        if (opts.afterFooter) parts.push(`margin-top: ${doc.spacing}em`);
         parts.push(`margin-bottom: ${doc.spacing}em`);
       }
       return parts.join("; ");
+    }
+
+    /**
+     * Styles compacts pour les blocs auxiliaires (lien vidéo, texte d'aide).
+     * @returns {string} Déclaration CSS inline
+     */
+    function auxBlockStyle() {
+      const parts = ["margin: 0", "padding: 0"];
+      if (isTightSpacing()) parts.push("line-height: 1.15");
+      return parts.join("; ");
+    }
+
+    /**
+     * Index de la dernière section d'origine : le texte d'aide s'insère juste après.
+     * @returns {number} Indice de section, ou -1 si aucune section d'origine
+     */
+    function getFooterInsertAfterIndex() {
+      let lastDefaultIdx = -1;
+      doc.sections.forEach((section, idx) => {
+        if (section.isDefault) lastDefaultIdx = idx;
+      });
+      return lastDefaultIdx;
     }
 
     /**
@@ -1686,7 +1710,7 @@
           const noBottom = i === items.length - 1;
           return `    <li style="${blockStyle({ noBottom })}; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`;
         });
-        const listStyle = `${wrapperStyle}; list-style: disc inside; margin-top: 0; padding-top: 0`;
+        const listStyle = `${wrapperStyle}; list-style: disc inside; margin: 0; padding: 0`;
         return `<ul style="${listStyle};">\n${lis.join("\n")}\n</ul>`;
       }
 
@@ -1705,9 +1729,11 @@
     /**
      * Génère le HTML d'une section (titre + champs renseignés uniquement).
      * @param {object} section Section à rendre
+     * @param {{ afterFooter?: boolean }} [opts] Options de rendu
      * @returns {string} HTML de la section
      */
-    function renderSectionHtml(section) {
+    function renderSectionHtml(section, opts = {}) {
+      const outerStyle = sectionOuterStyle({ afterFooter: !!opts.afterFooter });
       const items = section.fields.filter((f) => f.value.trim() !== "");
       const hasBody = items.length > 0;
 
@@ -1715,25 +1741,25 @@
         if (isTightSpacing()) {
           const titlePart = renderSectionTitleHtml(section);
           if (!hasBody) {
-            return `<div style="${sectionOuterStyle()};">${titlePart}</div>`;
+            return `<div style="${outerStyle};">${titlePart}</div>`;
           }
           const bodyPart = renderSectionBodyHtml(section, items, false, true);
           if (section.layout === "list") {
-            return `<div style="${sectionOuterStyle()};">${titlePart}${bodyPart}\n</div>`;
+            return `<div style="${outerStyle};">${titlePart}<br>\n${bodyPart}\n</div>`;
           }
-          return `<div style="${sectionOuterStyle()};">${titlePart}<br>\n${bodyPart}\n</div>`;
+          return `<div style="${outerStyle};">${titlePart}<br>\n${bodyPart}\n</div>`;
         }
 
         const titleHtml = `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
-        if (!hasBody) return `<div style="${sectionOuterStyle()};">${titleHtml}</div>`;
-        return `<div style="${sectionOuterStyle()};">${titleHtml}\n${renderSectionBodyHtml(section, items, false, true)}</div>`;
+        if (!hasBody) return `<div style="${outerStyle};">${titleHtml}</div>`;
+        return `<div style="${outerStyle};">${titleHtml}\n${renderSectionBodyHtml(section, items, false, true)}</div>`;
       }
 
       const titlePart = isTightSpacing()
         ? renderSectionTitleHtml(section)
         : `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
       if (!hasBody) {
-        return `<div style="${sectionOuterStyle()};">${titlePart}</div>`;
+        return `<div style="${outerStyle};">${titlePart}</div>`;
       }
 
       const openAttr = section.openByDefault ? " open" : "";
@@ -1741,16 +1767,25 @@
       const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer; margin: 0; padding: 0`;
       const detailsBlock = `<details${openAttr} style="${blockStyle({ noBottom: isTightSpacing() })};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true, true)}\n</details>`;
       const separator = isTightSpacing() ? "" : "\n";
-      return `<div style="${sectionOuterStyle()};">${titlePart}${separator}${detailsBlock}</div>`;
+      return `<div style="${outerStyle};">${titlePart}${separator}${detailsBlock}</div>`;
     }
 
     function linkHtml(url) {
       const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
-      return `<div style="${blockStyle({ noBottom: isTightSpacing() })};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a></div>`;
+      const style = auxBlockStyle();
+      return `<div style="${style};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a></div>`;
     }
 
     function footerHtml(url) {
-      return `<div style="${blockStyle({ noBottom: isTightSpacing() })};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`;
+      const style = auxBlockStyle();
+      const helpText = styledSpan(
+        "Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :",
+        doc.styles.bottomText
+      );
+      if (isTightSpacing()) {
+        return `<div style="${style};">${helpText}<br>\n${escapeHtml(url)}</div>`;
+      }
+      return `<div style="${style};">${helpText}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`;
     }
 
     function buildHtml() {
@@ -1761,18 +1796,24 @@
       const url = doc.url;
       const parts = [];
       let linkRendered = false;
+      let footerRendered = false;
+      const footerAfterIdx = getFooterInsertAfterIndex();
 
       doc.sections.forEach((section, idx) => {
-        const sectionHtml = renderSectionHtml(section);
+        const sectionHtml = renderSectionHtml(section, { afterFooter: footerRendered });
         if (sectionHtml) parts.push(sectionHtml);
         if (doc.includeVideoLink && idx === 0) {
           parts.push(linkHtml(url));
           linkRendered = true;
         }
+        if (doc.includeFooterHelp && !footerRendered && idx === footerAfterIdx) {
+          parts.push(footerHtml(url));
+          footerRendered = true;
+        }
       });
 
       if (doc.includeVideoLink && !linkRendered) parts.push(linkHtml(url));
-      if (doc.includeFooterHelp) parts.push(footerHtml(url));
+      if (doc.includeFooterHelp && !footerRendered) parts.push(footerHtml(url));
 
       return parts.join("\n");
     }
