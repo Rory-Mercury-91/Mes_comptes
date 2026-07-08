@@ -886,16 +886,6 @@
         <h2>Mise en forme</h2>
         <button type="button" id="btnResetStyles">Réinitialiser la mise en forme</button>
       </div>
-      <div class="style-row">
-        <span class="style-row-label">Espacement entre les lignes</span>
-        <div class="style-controls">
-          <label class="ctrl">
-            Marge
-            <input type="number" id="spacingInput" min="0" max="3" step="0.1"> em
-          </label>
-          <span class="hint" style="margin: 0;">0 = mode compact : lignes collées, sauts de ligne multiples fusionnés, interligne réduit.</span>
-        </div>
-      </div>
       <div id="stylesContainer"></div>
       <p class="hint">
         Réglez pour chaque partie : couleur du texte, surlignement (fond), taille, gras, italique et souligné.
@@ -1035,9 +1025,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v18";
-    const APP_VERSION = "2.15";
-    const APP_BUILD = "20260708n";
+    const STORAGE_KEY = "generateur-info-video-v19";
+    const APP_VERSION = "2.16";
+    const APP_BUILD = "20260708o";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1472,7 +1462,7 @@
         includeVideoLink: true,
         includeFooterHelp: true,
         simpleContent: "",
-        spacing: 0.3,
+        spacing: 0,
         sections: [
           makeSection({
             id: "sec_divers", title: "Informations diverses", layout: "inline", isDefault: true,
@@ -1524,7 +1514,7 @@
         includeVideoLink: d.includeVideoLink !== false,
         includeFooterHelp: d.includeFooterHelp !== false,
         simpleContent: d.simpleContent || "",
-        spacing: typeof d.spacing === "number" ? d.spacing : 0.3,
+        spacing: 0,
         sections: [],
         styles: {},
       };
@@ -2364,7 +2354,6 @@
       document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
       document.getElementById("includeVideoLink").checked = doc.includeVideoLink !== false;
       document.getElementById("includeFooterHelp").checked = doc.includeFooterHelp !== false;
-      document.getElementById("spacingInput").value = doc.spacing;
       applyModeUI();
       if (doc.mode === "simple") mountSimpleEditor();
       renderSections();
@@ -2631,15 +2620,6 @@
     previewBgInput.addEventListener("input", (e) => {
       previewBg = e.target.value;
       localStorage.setItem(PREVIEW_BG_KEY, previewBg);
-      updateOutput();
-    });
-
-    const spacingInput = document.getElementById("spacingInput");
-    spacingInput.value = doc.spacing;
-    spacingInput.addEventListener("input", (e) => {
-      const val = parseFloat(e.target.value);
-      doc.spacing = isNaN(val) ? 0 : Math.max(0, val);
-      saveDoc();
       updateOutput();
     });
   </script>
