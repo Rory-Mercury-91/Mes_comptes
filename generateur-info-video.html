@@ -546,7 +546,7 @@
       <label for="fieldSection">Section de destination</label>
       <select id="fieldSection"></select>
       <label for="fieldLabel">Libellé affiché</label>
-      <input type="text" id="fieldLabel" placeholder="Ex. : Autre information" />
+      <input type="text" id="fieldLabel" placeholder="Libellé du champ" />
       <label for="fieldType">Type de champ</label>
       <select id="fieldType">
         <option value="normal">Champ classique (libellé + valeur)</option>
@@ -554,7 +554,7 @@
       </select>
       <label for="fieldValue">Valeur / texte de la consigne</label>
       <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
-        <input type="text" id="fieldValue" placeholder="Valeur à insérer ou consigne importante" style="flex:1;margin:0;" />
+        <input type="text" id="fieldValue" placeholder="Saisir la valeur" style="flex:1;margin:0;" />
         <button type="button" class="btn-img" id="btnFieldInsertImage" title="Insérer le code &lt;img&gt; de l'alarme">+ Image</button>
       </div>
       <label class="ctrl" id="fieldWrapAlarmsWrap" style="display:none;margin-bottom:0.75rem;">
@@ -572,7 +572,7 @@
     <div class="modal">
       <h3>Ajouter une section</h3>
       <label for="sectionTitle">Titre de la section</label>
-      <input type="text" id="sectionTitle" placeholder="Ex. : Informations de paiement" />
+      <input type="text" id="sectionTitle" placeholder="Titre de la section" />
       <label for="sectionLayout">Type d'affichage</label>
       <select id="sectionLayout">
         <option value="inline">Lignes (inline)</option>
@@ -1053,9 +1053,7 @@
           const input = document.createElement("input");
           input.type = "text";
           input.value = field.value;
-          input.placeholder = field.type === "notice"
-            ? "Ex. : MME KETELERS DOIT ETRE EN COPIE..."
-            : "Saisir la valeur";
+          input.placeholder = "Saisir la valeur";
           input.title = "Valeur du champ (HTML autorisé via + Image)";
           input.addEventListener("input", () => {
             field.value = input.value;
@@ -1111,7 +1109,7 @@
             const srcInput = document.createElement("input");
             srcInput.type = "text";
             srcInput.value = field.alarmImageSrc || DEFAULT_ALARM_IMG;
-            srcInput.placeholder = DEFAULT_ALARM_IMG;
+            srcInput.placeholder = "Chemin de l'image";
             srcInput.addEventListener("input", () => {
               field.alarmImageSrc = srcInput.value || DEFAULT_ALARM_IMG;
               saveDoc();
@@ -1251,7 +1249,7 @@
       const isNotice = document.getElementById("fieldType").value === "notice";
       document.getElementById("fieldWrapAlarmsWrap").style.display = isNotice ? "flex" : "none";
       const labelInput = document.getElementById("fieldLabel");
-      labelInput.placeholder = isNotice ? "Libellé interne (non affiché dans le HTML)" : "Ex. : Autre information";
+      labelInput.placeholder = isNotice ? "Libellé interne (non affiché dans le HTML)" : "Libellé du champ";
     }
 
     /* --- Modale : ajout de champ --- */
