@@ -204,7 +204,7 @@
     .field-row {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: 58px 88px 1fr 1fr auto auto auto;
+      grid-template-columns: auto 88px 1fr 1fr auto auto auto;
       gap: 0.5rem;
       align-items: center;
       padding: 0.6rem;
@@ -218,7 +218,28 @@
       background: #261a1a;
     }
 
-    .field-row .field-pos-select,
+    .field-move-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .btn-move {
+      width: 28px;
+      height: 24px;
+      padding: 0;
+      font-size: 0.7rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-move:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
     .field-row .field-type-select {
       width: 100%;
       padding: 0.35rem 0.25rem;
@@ -259,7 +280,6 @@
       .field-row {
         grid-template-columns: 1fr 1fr;
       }
-      .field-row .field-pos-select,
       .field-row .field-type-select {
         grid-column: span 1;
       }
@@ -467,10 +487,10 @@
 
       <p class="hint">
         Chaque section a un titre et un type d'affichage : <strong>Inline</strong> (une ligne par champ)
-        ou <strong>Liste</strong> (puces &lt;li&gt;). Le <strong>niveau (1 à 10)</strong> fixe l'ordre d'affichage
-        dans la section (1 = tout en haut, 10 = tout en bas). Le type <strong>Consigne importante</strong>
-        génère un bandeau rouge avec icônes d'alarme. Le bouton <strong>+ Image</strong> insère le code
-        &lt;img&gt; de l'alarme orange à l'emplacement du curseur.
+        ou <strong>Liste</strong> (puces &lt;li&gt;). Utilisez les flèches <strong>▲ ▼</strong> pour
+        réordonner les champs (l'ordre à l'écran = l'ordre dans le HTML généré). Le type
+        <strong>Consigne importante</strong> génère un bandeau rouge avec icônes d'alarme.
+        Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
       </p>
     </section>
 
@@ -532,8 +552,6 @@
         <option value="normal">Champ classique (libellé + valeur)</option>
         <option value="notice">Consigne importante (bandeau rouge)</option>
       </select>
-      <label for="fieldPosition">Niveau dans la section (1 = haut, 10 = bas)</label>
-      <select id="fieldPosition"></select>
       <label for="fieldValue">Valeur / texte de la consigne</label>
       <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
         <input type="text" id="fieldValue" placeholder="Valeur à insérer ou consigne importante" style="flex:1;margin:0;" />
@@ -568,7 +586,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v3";
+    const STORAGE_KEY = "generateur-info-video-v4";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
 
@@ -599,7 +617,6 @@
         label: "",
         value: "",
         type: "normal",
-        position: 5,
         wrapAlarms: true,
         alarmImageSrc: DEFAULT_ALARM_IMG,
         ...(overrides || {}),
@@ -607,36 +624,19 @@
     }
 
     /**
-     * Remplit un sélecteur avec les niveaux 1 à 10.
-     * @param {HTMLSelectElement} select Élément select cible
-     * @param {number} [selected] Valeur présélectionnée
+     * Déplace un champ vers le haut ou le bas dans sa section.
+     * @param {object} section Section contenant le champ
+     * @param {number} index Index actuel du champ
+     * @param {number} direction -1 pour monter, +1 pour descendre
      */
-    function fillPositionSelect(select, selected) {
-      select.innerHTML = Array.from({ length: 10 }, (_, i) => {
-        const n = i + 1;
-        const label = n === 1 ? "1 — tout en haut" : n === 10 ? "10 — tout en bas" : String(n);
-        return `<option value="${n}">${label}</option>`;
-      }).join("");
-      select.value = String(Math.min(10, Math.max(1, selected || 5)));
-    }
-
-    /**
-     * Prochaine position disponible dans une section.
-     * @param {object} section Section cible
-     * @returns {number} Niveau suggéré
-     */
-    function nextFieldPosition(section) {
-      if (!section.fields.length) return 1;
-      return Math.min(10, Math.max(...section.fields.map((f) => f.position || 1)) + 1);
-    }
-
-    /**
-     * Trie les champs par niveau croissant.
-     * @param {object[]} fields Liste de champs
-     * @returns {object[]} Champs triés
-     */
-    function sortFieldsByPosition(fields) {
-      return [...fields].sort((a, b) => (a.position || 50) - (b.position || 50));
+    function moveField(section, index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= section.fields.length) return;
+      const [item] = section.fields.splice(index, 1);
+      section.fields.splice(newIndex, 0, item);
+      saveDoc();
+      renderSections();
+      updateOutput();
     }
 
     /**
@@ -691,26 +691,25 @@
             id: "sec_divers", title: "Informations diverses", layout: "inline", isDefault: true,
             titleStyle: makeStyle({ colorOn: true, colorValue: "#F46C0B", size: 1.2 }),
             fields: [
-              makeField({ label: "Code Inter", value: "", position: 1 }),
+              makeField({ label: "Code Inter", value: "" }),
               makeField({
                 label: "Consigne importante",
                 value: "",
                 type: "notice",
-                position: 2,
                 wrapAlarms: true,
               }),
-              makeField({ label: "Info.", value: "", position: 3 }),
+              makeField({ label: "Info.", value: "" }),
             ],
           },
           {
             id: "sec_connexion", title: "Information de connexion vidéo", layout: "list", isDefault: true,
             titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
             fields: [
-              makeField({ label: "Adresse IP", value: "", position: 1 }),
-              makeField({ label: "Port", value: "", position: 2 }),
-              makeField({ label: "Identifiant", value: "", position: 3 }),
-              makeField({ label: "Mot de passe", value: "", position: 4 }),
-              makeField({ label: "Autre information", value: "", position: 5 }),
+              makeField({ label: "Adresse IP", value: "" }),
+              makeField({ label: "Port", value: "" }),
+              makeField({ label: "Identifiant", value: "" }),
+              makeField({ label: "Mot de passe", value: "" }),
+              makeField({ label: "Autre information", value: "" }),
             ],
           },
         ],
@@ -735,22 +734,27 @@
         sections: [],
         styles: {},
       };
-      out.sections = (d.sections || []).map((s) => ({
-        id: s.id || uid(),
-        title: s.title || "Section",
-        layout: s.layout === "list" ? "list" : "inline",
-        isDefault: !!s.isDefault,
-        titleStyle: makeStyle(s.titleStyle || {}),
-        fields: sortFieldsByPosition(s.fields || []).map((f, idx) => ({
-          id: f.id || uid(),
-          label: f.label || "",
-          value: f.value || "",
-          type: f.type === "notice" ? "notice" : "normal",
-          position: Math.min(10, Math.max(1, typeof f.position === "number" ? f.position : idx + 1)),
-          wrapAlarms: f.wrapAlarms !== false,
-          alarmImageSrc: f.alarmImageSrc || DEFAULT_ALARM_IMG,
-        })),
-      }));
+      out.sections = (d.sections || []).map((s) => {
+        let rawFields = [...(s.fields || [])];
+        if (rawFields.some((f) => typeof f.position === "number")) {
+          rawFields.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+        }
+        return {
+          id: s.id || uid(),
+          title: s.title || "Section",
+          layout: s.layout === "list" ? "list" : "inline",
+          isDefault: !!s.isDefault,
+          titleStyle: makeStyle(s.titleStyle || {}),
+          fields: rawFields.map((f) => ({
+            id: f.id || uid(),
+            label: f.label || "",
+            value: f.value || "",
+            type: f.type === "notice" ? "notice" : "normal",
+            wrapAlarms: f.wrapAlarms !== false,
+            alarmImageSrc: f.alarmImageSrc || DEFAULT_ALARM_IMG,
+          })),
+        };
+      });
       const st = d.styles || {};
       out.styles = {
         link: makeStyle(st.link || { size: 1.2 }),
@@ -762,18 +766,18 @@
       // Migration : ajoute la consigne importante dans la section d'origine si absente
       const divers = out.sections.find((s) => s.id === "sec_divers");
       if (divers && !divers.fields.some((f) => f.type === "notice")) {
-        const codeInter = divers.fields.find((f) => /code inter/i.test(f.label));
-        const infoField = divers.fields.find((f) => /^info\.?$/i.test(f.label));
-        if (codeInter) codeInter.position = 1;
-        if (infoField) infoField.position = 3;
-        divers.fields.push(makeField({
+        const codeIdx = divers.fields.findIndex((f) => /code inter/i.test(f.label));
+        const noticeField = makeField({
           label: "Consigne importante",
           value: "",
           type: "notice",
-          position: 2,
           wrapAlarms: true,
-        }));
-        divers.fields = sortFieldsByPosition(divers.fields);
+        });
+        if (codeIdx !== -1) {
+          divers.fields.splice(codeIdx + 1, 0, noticeField);
+        } else {
+          divers.fields.unshift(noticeField);
+        }
       }
 
       return out;
@@ -889,7 +893,7 @@
      */
     function renderSectionHtml(section) {
       const titleHtml = `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
-      const items = sortFieldsByPosition(section.fields).filter((f) => f.value.trim() !== "");
+      const items = section.fields.filter((f) => f.value.trim() !== "");
 
       if (section.layout === "list") {
         const lis = items.map((f) =>
@@ -993,19 +997,31 @@
         const grid = document.createElement("div");
         grid.className = "fields-grid";
 
-        sortFieldsByPosition(section.fields).forEach((field) => {
+        section.fields.forEach((field, fIdx) => {
           const row = document.createElement("div");
           row.className = "field-row" + (field.type === "notice" ? " notice-row" : "");
 
-          const posSelect = document.createElement("select");
-          posSelect.className = "field-pos-select";
-          posSelect.title = "Niveau dans la section (1 = haut, 10 = bas)";
-          fillPositionSelect(posSelect, field.position);
-          posSelect.addEventListener("change", () => {
-            field.position = parseInt(posSelect.value, 10) || 1;
-            saveDoc();
-            renderSections();
-          });
+          const moveBtns = document.createElement("div");
+          moveBtns.className = "field-move-btns";
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "btn-move";
+          upBtn.textContent = "▲";
+          upBtn.title = "Monter";
+          upBtn.disabled = fIdx === 0;
+          upBtn.addEventListener("click", () => moveField(section, fIdx, -1));
+
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.className = "btn-move";
+          downBtn.textContent = "▼";
+          downBtn.title = "Descendre";
+          downBtn.disabled = fIdx === section.fields.length - 1;
+          downBtn.addEventListener("click", () => moveField(section, fIdx, 1));
+
+          moveBtns.appendChild(upBtn);
+          moveBtns.appendChild(downBtn);
 
           const typeSelect = document.createElement("select");
           typeSelect.className = "field-type-select";
@@ -1060,15 +1076,13 @@
           fDel.textContent = "✕";
           fDel.title = "Supprimer ce champ";
           fDel.addEventListener("click", () => {
-            const realIdx = section.fields.findIndex((x) => x.id === field.id);
-            if (realIdx === -1) return;
-            section.fields.splice(realIdx, 1);
+            section.fields.splice(fIdx, 1);
             saveDoc();
             renderSections();
             updateOutput();
           });
 
-          row.appendChild(posSelect);
+          row.appendChild(moveBtns);
           row.appendChild(typeSelect);
           row.appendChild(labelInput);
           row.appendChild(input);
@@ -1251,8 +1265,6 @@
         .map((s) => `<option value="${s.id}">${escapeHtml(s.title || "Section")}</option>`)
         .join("");
       if (preselectSectionId) select.value = preselectSectionId;
-      const section = doc.sections.find((s) => s.id === select.value) || doc.sections[0];
-      fillPositionSelect(document.getElementById("fieldPosition"), nextFieldPosition(section));
       document.getElementById("fieldLabel").value = "";
       document.getElementById("fieldValue").value = "";
       document.getElementById("fieldType").value = "normal";
@@ -1271,7 +1283,6 @@
       const label = document.getElementById("fieldLabel").value.trim();
       const value = document.getElementById("fieldValue").value;
       const type = document.getElementById("fieldType").value === "notice" ? "notice" : "normal";
-      const position = parseInt(document.getElementById("fieldPosition").value, 10) || 5;
       if (!label && type !== "notice") {
         document.getElementById("fieldLabel").focus();
         return;
@@ -1282,10 +1293,8 @@
         label: label || "Consigne importante",
         value,
         type,
-        position,
         wrapAlarms: document.getElementById("fieldWrapAlarms").checked,
       }));
-      section.fields = sortFieldsByPosition(section.fields);
       saveDoc();
       renderSections();
       closeAddField();
@@ -1358,10 +1367,6 @@
     document.getElementById("fieldType").addEventListener("change", toggleFieldModalNoticeOptions);
     document.getElementById("btnFieldInsertImage").addEventListener("click", () => {
       insertImageTag(document.getElementById("fieldValue"));
-    });
-    document.getElementById("fieldSection").addEventListener("change", (e) => {
-      const section = doc.sections.find((s) => s.id === e.target.value);
-      if (section) fillPositionSelect(document.getElementById("fieldPosition"), nextFieldPosition(section));
     });
     document.getElementById("btnSectionCancel").addEventListener("click", closeAddSection);
     document.getElementById("btnSectionConfirm").addEventListener("click", confirmAddSection);
