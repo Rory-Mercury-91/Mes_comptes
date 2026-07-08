@@ -1010,9 +1010,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v13";
-    const APP_VERSION = "2.10";
-    const APP_BUILD = "20260708i";
+    const STORAGE_KEY = "generateur-info-video-v14";
+    const APP_VERSION = "2.11";
+    const APP_BUILD = "20260708j";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1643,29 +1643,56 @@
     }
 
     /**
+     * Renvoie les styles du conteneur englobant une section entière.
+     * @returns {string} Déclaration CSS inline
+     */
+    function sectionOuterStyle() {
+      const parts = ["margin: 0", "padding: 0", "color: #000000"];
+      if (isTightSpacing()) {
+        parts.push("line-height: 1.15");
+      } else {
+        parts.push(`margin-bottom: ${doc.spacing}em`);
+      }
+      return parts.join("; ");
+    }
+
+    /**
+     * Génère le HTML du titre d'une section.
+     * @param {object} section Section source
+     * @returns {string} Fragment HTML du titre
+     */
+    function renderSectionTitleHtml(section) {
+      return styledSpan(escapeHtml(section.title) + " :", section.titleStyle);
+    }
+
+    /**
      * Génère le corps HTML d'une section (champs renseignés).
      * @param {object} section Section source
      * @param {object[]} items Champs à afficher
      * @param {boolean} [insideDetails] Vrai si le contenu est dans un bloc details
+     * @param {boolean} [afterTitle] Vrai si le corps suit immédiatement le titre (pas de marge haute)
      * @returns {string} HTML du contenu
      */
-    function renderSectionBodyHtml(section, items, insideDetails) {
+    function renderSectionBodyHtml(section, items, insideDetails, afterTitle) {
       const baseWrapper = "color: #000000; margin: 0; padding: 0";
       const wrapperStyle = insideDetails
         ? baseWrapper + (isTightSpacing() ? "; line-height: 1.15" : "")
-        : baseWrapper + (isTightSpacing() ? "" : `; margin-bottom: ${doc.spacing}em`);
+        : afterTitle
+          ? baseWrapper
+          : baseWrapper + (isTightSpacing() ? "" : `; margin-bottom: ${doc.spacing}em`);
 
       if (section.layout === "list") {
         const lis = items.map((f, i) => {
           const noBottom = i === items.length - 1;
           return `    <li style="${blockStyle({ noBottom })}; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`;
         });
-        return `<ul style="${wrapperStyle}; list-style: disc inside;">\n${lis.join("\n")}\n</ul>`;
+        const listStyle = `${wrapperStyle}; list-style: disc inside; margin-top: 0; padding-top: 0`;
+        return `<ul style="${listStyle};">\n${lis.join("\n")}\n</ul>`;
       }
 
       if (isTightSpacing()) {
         const lines = items.map((f) => renderFieldHtml(f));
-        return `<div style="${wrapperStyle};">\n${lines.join("<br>\n")}\n</div>`;
+        return lines.join("<br>\n");
       }
 
       const divs = items.map((f, i) => {
@@ -1681,17 +1708,40 @@
      * @returns {string} HTML de la section
      */
     function renderSectionHtml(section) {
-      const titleHtml = `<div style="${blockStyle({ noBottom: isTightSpacing() })};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
       const items = section.fields.filter((f) => f.value.trim() !== "");
+      const hasBody = items.length > 0;
 
       if (!section.collapsible) {
-        return `${titleHtml}\n${renderSectionBodyHtml(section, items, false)}`;
+        if (isTightSpacing()) {
+          const titlePart = renderSectionTitleHtml(section);
+          if (!hasBody) {
+            return `<div style="${sectionOuterStyle()};">${titlePart}</div>`;
+          }
+          const bodyPart = renderSectionBodyHtml(section, items, false, true);
+          if (section.layout === "list") {
+            return `<div style="${sectionOuterStyle()};">${titlePart}${bodyPart}\n</div>`;
+          }
+          return `<div style="${sectionOuterStyle()};">${titlePart}<br>\n${bodyPart}\n</div>`;
+        }
+
+        const titleHtml = `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
+        if (!hasBody) return `<div style="${sectionOuterStyle()};">${titleHtml}</div>`;
+        return `<div style="${sectionOuterStyle()};">${titleHtml}\n${renderSectionBodyHtml(section, items, false, true)}</div>`;
+      }
+
+      const titlePart = isTightSpacing()
+        ? renderSectionTitleHtml(section)
+        : `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
+      if (!hasBody) {
+        return `<div style="${sectionOuterStyle()};">${titlePart}</div>`;
       }
 
       const openAttr = section.openByDefault ? " open" : "";
       const summaryText = escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT);
-      const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer`;
-      return `${titleHtml}\n<details${openAttr} style="${blockStyle({ noBottom: isTightSpacing() })};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true)}\n</details>`;
+      const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer; margin: 0; padding: 0`;
+      const detailsBlock = `<details${openAttr} style="${blockStyle({ noBottom: isTightSpacing() })};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true, true)}\n</details>`;
+      const separator = isTightSpacing() ? "" : "\n";
+      return `<div style="${sectionOuterStyle()};">${titlePart}${separator}${detailsBlock}</div>`;
     }
 
     function linkHtml(url) {
