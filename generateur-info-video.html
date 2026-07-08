@@ -200,6 +200,33 @@
     .type-badge.inline { background: #3a2a15; color: #f0a860; }
     .type-badge.list { background: #17331c; color: #7bc98a; }
     .type-badge.notice { background: #4a1515; color: #f47c7c; }
+    .type-badge.collapsible { background: #2a2040; color: #b39ddb; }
+
+    .section-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      background: #14181d;
+    }
+
+    .section-options input[type="text"] {
+      flex: 1 1 220px;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .section-options input[type="text"]:disabled {
+      opacity: 0.45;
+    }
 
     .field-row {
       grid-column: 1 / -1;
@@ -491,6 +518,8 @@
         réordonner les champs (l'ordre à l'écran = l'ordre dans le HTML généré). Le type
         <strong>Consigne importante</strong> génère un bandeau rouge avec icônes d'alarme.
         Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
+        Cochez <strong>Réductible</strong> sur une section pour générer un bloc
+        &lt;details&gt;/&lt;summary&gt; (titre visible, contenu repliable).
       </p>
     </section>
 
@@ -578,6 +607,16 @@
         <option value="inline">Lignes (inline)</option>
         <option value="list">Liste à puces</option>
       </select>
+      <label class="ctrl" style="margin-bottom:0.75rem;">
+        <input type="checkbox" id="sectionCollapsible">
+        Section réductible
+      </label>
+      <label for="sectionSummary" id="sectionSummaryLabel">Texte du lien d'ouverture</label>
+      <input type="text" id="sectionSummary" placeholder="Cliquez ici pour afficher !" disabled />
+      <label class="ctrl" id="sectionOpenWrap" style="margin-bottom:0.75rem;">
+        <input type="checkbox" id="sectionOpenByDefault" disabled>
+        Ouverte par défaut
+      </label>
       <div class="modal-actions">
         <button type="button" id="btnSectionCancel">Annuler</button>
         <button type="button" class="btn-primary" id="btnSectionConfirm">Ajouter</button>
@@ -586,9 +625,10 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v4";
+    const STORAGE_KEY = "generateur-info-video-v5";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
+    const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
 
     // Couleur de fond de simulation de l'aperçu (préférence locale, hors HTML copié)
     let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
@@ -604,6 +644,35 @@
 
     function uid() {
       return "id_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    /**
+     * Crée une section avec ses propriétés par défaut.
+     * @param {object} [overrides] Propriétés à surcharger
+     * @returns {object} Section normalisée
+     */
+    function makeSection(overrides) {
+      return {
+        id: uid(),
+        title: "Section",
+        layout: "inline",
+        isDefault: false,
+        collapsible: false,
+        summaryText: DEFAULT_SUMMARY_TEXT,
+        openByDefault: false,
+        titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
+        fields: [],
+        ...(overrides || {}),
+      };
+    }
+
+    /**
+     * Active ou désactive les options de section réductible dans la modale.
+     */
+    function toggleSectionModalOptions() {
+      const enabled = document.getElementById("sectionCollapsible").checked;
+      document.getElementById("sectionSummary").disabled = !enabled;
+      document.getElementById("sectionOpenByDefault").disabled = !enabled;
     }
 
     /**
@@ -687,7 +756,7 @@
         url: "",
         spacing: 0.3,
         sections: [
-          {
+          makeSection({
             id: "sec_divers", title: "Informations diverses", layout: "inline", isDefault: true,
             titleStyle: makeStyle({ colorOn: true, colorValue: "#F46C0B", size: 1.2 }),
             fields: [
@@ -700,9 +769,11 @@
               }),
               makeField({ label: "Info.", value: "" }),
             ],
-          },
-          {
+          }),
+          makeSection({
             id: "sec_connexion", title: "Information de connexion vidéo", layout: "list", isDefault: true,
+            collapsible: true,
+            summaryText: DEFAULT_SUMMARY_TEXT,
             titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
             fields: [
               makeField({ label: "Adresse IP", value: "" }),
@@ -711,12 +782,13 @@
               makeField({ label: "Mot de passe", value: "" }),
               makeField({ label: "Autre information", value: "" }),
             ],
-          },
+          }),
         ],
         styles: {
           link: makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1.2 }),
           labels: makeStyle({ colorOn: false, colorValue: "#000000", size: 1 }),
           notice: makeStyle({ colorOn: true, colorValue: "#F40B0B", size: 1.1, bold: true, underline: false }),
+          summary: makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1, bold: false, underline: false }),
           bottomText: makeStyle({ colorOn: true, colorValue: "#000000", size: 1 }),
         },
       };
@@ -744,6 +816,9 @@
           title: s.title || "Section",
           layout: s.layout === "list" ? "list" : "inline",
           isDefault: !!s.isDefault,
+          collapsible: !!s.collapsible,
+          summaryText: s.summaryText || DEFAULT_SUMMARY_TEXT,
+          openByDefault: !!s.openByDefault,
           titleStyle: makeStyle(s.titleStyle || {}),
           fields: rawFields.map((f) => ({
             id: f.id || uid(),
@@ -760,6 +835,7 @@
         link: makeStyle(st.link || { size: 1.2 }),
         labels: makeStyle(st.labels || { size: 1 }),
         notice: makeStyle(st.notice || { colorOn: true, colorValue: "#F40B0B", size: 1.1, bold: true, underline: false }),
+        summary: makeStyle(st.summary || { size: 1, bold: false, underline: false }),
         bottomText: makeStyle(st.bottomText || { colorOn: true, colorValue: "#000000", size: 1 }),
       };
 
@@ -887,6 +963,31 @@
     }
 
     /**
+     * Génère le corps HTML d'une section (champs renseignés).
+     * @param {object} section Section source
+     * @param {object[]} items Champs à afficher
+     * @param {boolean} [insideDetails] Vrai si le contenu est dans un bloc details
+     * @returns {string} HTML du contenu
+     */
+    function renderSectionBodyHtml(section, items, insideDetails) {
+      const wrapperStyle = insideDetails
+        ? "color: #000000; margin: 0"
+        : `color: #000000; ${blockMargin()}`;
+
+      if (section.layout === "list") {
+        const lis = items.map((f) =>
+          `    <li style="${blockMargin()};">${renderFieldHtml(f)}</li>`
+        );
+        return `<ul style="${wrapperStyle};">\n${lis.join("\n")}\n</ul>`;
+      }
+
+      const divs = items.map((f) =>
+        `    <div style="${blockMargin()};">${renderFieldHtml(f)}</div>`
+      );
+      return `<div style="${wrapperStyle};">\n${divs.join("\n")}\n</div>`;
+    }
+
+    /**
      * Génère le HTML d'une section (titre + champs renseignés uniquement).
      * @param {object} section Section à rendre
      * @returns {string} HTML de la section
@@ -895,17 +996,14 @@
       const titleHtml = `<div style="${blockMargin()};">${styledSpan(escapeHtml(section.title) + " :", section.titleStyle)}</div>`;
       const items = section.fields.filter((f) => f.value.trim() !== "");
 
-      if (section.layout === "list") {
-        const lis = items.map((f) =>
-          `    <li style="${blockMargin()};">${renderFieldHtml(f)}</li>`
-        );
-        return `${titleHtml}\n<ul style="color: #000000; ${blockMargin()};">\n${lis.join("\n")}\n</ul>`;
+      if (!section.collapsible) {
+        return `${titleHtml}\n${renderSectionBodyHtml(section, items, false)}`;
       }
 
-      const divs = items.map((f) =>
-        `    <div style="${blockMargin()};">${renderFieldHtml(f)}</div>`
-      );
-      return `${titleHtml}\n<div style="color: #000000; ${blockMargin()};">\n${divs.join("\n")}\n</div>`;
+      const openAttr = section.openByDefault ? " open" : "";
+      const summaryText = escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT);
+      const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer`;
+      return `${titleHtml}\n<details${openAttr} style="${blockMargin()};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true)}\n</details>`;
     }
 
     function linkHtml(url) {
@@ -993,6 +1091,54 @@
         head.appendChild(badge);
         head.appendChild(delBtn);
         block.appendChild(head);
+
+        const sectionOpts = document.createElement("div");
+        sectionOpts.className = "section-options";
+
+        const collapsibleLabel = document.createElement("label");
+        collapsibleLabel.className = "ctrl";
+        const collapsibleCheck = document.createElement("input");
+        collapsibleCheck.type = "checkbox";
+        collapsibleCheck.checked = !!section.collapsible;
+        collapsibleCheck.addEventListener("change", () => {
+          section.collapsible = collapsibleCheck.checked;
+          saveDoc();
+          renderSections();
+          updateOutput();
+        });
+        collapsibleLabel.appendChild(collapsibleCheck);
+        collapsibleLabel.appendChild(document.createTextNode(" Réductible"));
+
+        const summaryInput = document.createElement("input");
+        summaryInput.type = "text";
+        summaryInput.placeholder = DEFAULT_SUMMARY_TEXT;
+        summaryInput.value = section.summaryText || DEFAULT_SUMMARY_TEXT;
+        summaryInput.disabled = !section.collapsible;
+        summaryInput.title = "Texte affiché sur le lien d'ouverture";
+        summaryInput.addEventListener("input", () => {
+          section.summaryText = summaryInput.value || DEFAULT_SUMMARY_TEXT;
+          saveDoc();
+          updateOutput();
+        });
+
+        const openLabel = document.createElement("label");
+        openLabel.className = "ctrl";
+        const openCheck = document.createElement("input");
+        openCheck.type = "checkbox";
+        openCheck.checked = !!section.openByDefault;
+        openCheck.disabled = !section.collapsible;
+        openCheck.addEventListener("change", () => {
+          section.openByDefault = openCheck.checked;
+          saveDoc();
+          updateOutput();
+        });
+        openLabel.appendChild(openCheck);
+        openLabel.appendChild(document.createTextNode(" Ouverte par défaut"));
+
+        sectionOpts.appendChild(collapsibleLabel);
+        sectionOpts.appendChild(summaryInput);
+        sectionOpts.appendChild(openLabel);
+        block.appendChild(sectionOpts);
 
         const grid = document.createElement("div");
         grid.className = "fields-grid";
@@ -1145,6 +1291,7 @@
       targets.push({ id: "link", label: "Lien « CLIQUEZ ICI »", style: doc.styles.link });
       targets.push({ id: "labels", label: "Libellés des champs", style: doc.styles.labels });
       targets.push({ id: "notice", label: "Consignes importantes", style: doc.styles.notice });
+      targets.push({ id: "summary", label: "Lien d'ouverture (summary)", style: doc.styles.summary });
       targets.push({ id: "bottomText", label: "Texte d'information du bas", style: doc.styles.bottomText });
       return targets;
     }
@@ -1153,6 +1300,7 @@
       if (id === "link") return doc.styles.link;
       if (id === "labels") return doc.styles.labels;
       if (id === "notice") return doc.styles.notice;
+      if (id === "summary") return doc.styles.summary;
       if (id === "bottomText") return doc.styles.bottomText;
       const found = getStyleTargets().find((t) => t.id === id);
       return found ? found.style : null;
@@ -1232,6 +1380,7 @@
       doc.styles.link = makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1.2 });
       doc.styles.labels = makeStyle({ colorOn: false, colorValue: "#000000", size: 1 });
       doc.styles.notice = makeStyle({ colorOn: true, colorValue: "#F40B0B", size: 1.1, bold: true, underline: false });
+      doc.styles.summary = makeStyle({ colorOn: false, colorValue: "#2980b9", size: 1, bold: false, underline: false });
       doc.styles.bottomText = makeStyle({ colorOn: true, colorValue: "#000000", size: 1 });
       saveDoc();
       renderStyleControls();
@@ -1302,6 +1451,10 @@
     function openAddSection() {
       document.getElementById("sectionTitle").value = "";
       document.getElementById("sectionLayout").value = "inline";
+      document.getElementById("sectionCollapsible").checked = false;
+      document.getElementById("sectionSummary").value = DEFAULT_SUMMARY_TEXT;
+      document.getElementById("sectionOpenByDefault").checked = false;
+      toggleSectionModalOptions();
       document.getElementById("addSectionModal").classList.add("open");
       document.getElementById("sectionTitle").focus();
     }
@@ -1317,14 +1470,13 @@
         document.getElementById("sectionTitle").focus();
         return;
       }
-      doc.sections.push({
-        id: uid(),
+      doc.sections.push(makeSection({
         title,
         layout,
-        isDefault: false,
-        titleStyle: makeStyle({ colorOn: true, colorValue: "#2980b9", size: 1.2 }),
-        fields: [],
-      });
+        collapsible: document.getElementById("sectionCollapsible").checked,
+        summaryText: document.getElementById("sectionSummary").value.trim() || DEFAULT_SUMMARY_TEXT,
+        openByDefault: document.getElementById("sectionOpenByDefault").checked,
+      }));
       saveDoc();
       renderSections();
       renderStyleControls();
@@ -1368,6 +1520,7 @@
     });
     document.getElementById("btnSectionCancel").addEventListener("click", closeAddSection);
     document.getElementById("btnSectionConfirm").addEventListener("click", confirmAddSection);
+    document.getElementById("sectionCollapsible").addEventListener("change", toggleSectionModalOptions);
 
     const stylesContainer = document.getElementById("stylesContainer");
     stylesContainer.addEventListener("input", handleStyleChange);
