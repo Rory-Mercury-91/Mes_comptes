@@ -948,7 +948,7 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v9";
-    const APP_VERSION = "2.6";
+    const APP_VERSION = "2.7";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1043,6 +1043,57 @@
       addBtn("S", "underline", "underline-btn", "Souligné");
       addBtn("•", "insertUnorderedList", "", "Liste à puces");
       addBtn("1.", "insertOrderedList", "", "Liste numérotée");
+
+      /**
+       * Applique une taille de police à la sélection courante.
+       * @param {string} sizeEm Taille en em
+       */
+      const applyFontSize = (sizeEm) => {
+        editor.focus();
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+
+        const range = selection.getRangeAt(0);
+        const span = document.createElement("span");
+        span.style.fontSize = sizeEm;
+
+        try {
+          range.surroundContents(span);
+        } catch (_) {
+          const fragment = range.extractContents();
+          span.appendChild(fragment);
+          range.insertNode(span);
+        }
+
+        selection.removeAllRanges();
+        onChange();
+      };
+
+      const sizeWrap = document.createElement("label");
+      sizeWrap.className = "richtext-size";
+      sizeWrap.title = "Taille du texte sélectionné";
+      sizeWrap.appendChild(document.createTextNode("Taille"));
+      const sizeSelect = document.createElement("select");
+      [
+        { value: "0.85em", label: "Petit" },
+        { value: "1em", label: "Normal" },
+        { value: "1.2em", label: "Grand" },
+        { value: "1.5em", label: "Très grand" },
+        { value: "2em", label: "Énorme" },
+      ].forEach((opt) => {
+        const o = document.createElement("option");
+        o.value = opt.value;
+        o.textContent = opt.label;
+        sizeSelect.appendChild(o);
+      });
+      sizeSelect.value = "1em";
+      sizeSelect.addEventListener("mousedown", (e) => e.preventDefault());
+      sizeSelect.addEventListener("change", (e) => {
+        applyFontSize(e.target.value);
+        e.target.value = "1em";
+      });
+      sizeWrap.appendChild(sizeSelect);
+      toolbar.appendChild(sizeWrap);
 
       const textColor = document.createElement("label");
       textColor.className = "richtext-color";
