@@ -863,6 +863,7 @@
           Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour un bloc
           &lt;details&gt;/&lt;summary&gt;. Couleurs et styles : panneau <strong>Mise en forme</strong>.
           Décochez le lien vidéo ou le texte du bas si vous n'en avez pas besoin.
+          Le lien vidéo reste toujours juste au-dessus de la section <strong>connexion vidéo</strong> et bouge avec elle.
           Utilisez <strong>Exporter / Charger les informations</strong> pour sauvegarder ou reprendre vos saisies.
         </p>
       </div>
@@ -1034,9 +1035,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v16";
-    const APP_VERSION = "2.13";
-    const APP_BUILD = "20260708l";
+    const STORAGE_KEY = "generateur-info-video-v17";
+    const APP_VERSION = "2.14";
+    const APP_BUILD = "20260708m";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1739,15 +1740,50 @@
     }
 
     /**
-     * Index de la dernière section d'origine : le texte d'aide s'insère juste après.
-     * @returns {number} Indice de section, ou -1 si aucune section d'origine
+     * Index de la section « connexion vidéo » dans le document.
+     * @returns {number} Indice de section, ou -1 si absente
+     */
+    function getConnexionSectionIndex() {
+      const byId = doc.sections.findIndex((s) => s.id === "sec_connexion");
+      if (byId >= 0) return byId;
+      return doc.sections.findIndex((s) => s.isDefault && s.layout === "list");
+    }
+
+    /**
+     * Index de la section après laquelle insérer le texte d'aide (connexion vidéo en priorité).
+     * @returns {number} Indice de section, ou -1 si aucune section cible
      */
     function getFooterInsertAfterIndex() {
+      const connexionIdx = doc.sections.findIndex((s) => s.id === "sec_connexion");
+      if (connexionIdx >= 0) return connexionIdx;
       let lastDefaultIdx = -1;
       doc.sections.forEach((section, idx) => {
         if (section.isDefault) lastDefaultIdx = idx;
       });
       return lastDefaultIdx;
+    }
+
+    /**
+     * Fragment HTML du lien vidéo (sans conteneur bloc).
+     * @param {string} url URL de la vidéo
+     * @returns {string} HTML du lien
+     */
+    function linkHtmlFragment(url) {
+      const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
+      return `<a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a>`;
+    }
+
+    /**
+     * Fragment HTML du texte d'aide (sans conteneur bloc, précédé d'un saut de ligne).
+     * @param {string} url URL affichée en bas
+     * @returns {string} HTML du pied de page
+     */
+    function footerHtmlFragment(url) {
+      const helpText = styledSpan(
+        "Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :",
+        doc.styles.bottomText
+      );
+      return `<br>\n${helpText}<br>\n${escapeHtml(url)}`;
     }
 
     /**
@@ -1776,6 +1812,9 @@
           : baseWrapper + (isTightSpacing() ? "" : `; margin-bottom: ${doc.spacing}em`);
 
       if (section.layout === "list") {
+        if (isTightSpacing()) {
+          return items.map((f) => `• ${renderFieldHtml(f)}`).join("<br>\n");
+        }
         const lis = items.map((f, i) => {
           const noBottom = i === items.length - 1;
           return `    <li style="${blockStyle({ noBottom })}; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`;
@@ -1799,25 +1838,31 @@
     /**
      * Génère le HTML d'une section (titre + champs renseignés uniquement).
      * @param {object} section Section à rendre
-     * @param {{ afterFooter?: boolean }} [opts] Options de rendu
+     * @param {{ afterFooter?: boolean, prependLinkHtml?: string, appendFooterHtml?: string }} [opts] Options de rendu
      * @returns {string} HTML de la section
      */
     function renderSectionHtml(section, opts = {}) {
       const outerStyle = sectionOuterStyle({ afterFooter: !!opts.afterFooter });
       const items = section.fields.filter((f) => f.value.trim() !== "");
       const hasBody = items.length > 0;
+      const prepend = opts.prependLinkHtml ? `${opts.prependLinkHtml}<br>\n` : "";
+      const append = opts.appendFooterHtml || "";
 
       if (!section.collapsible) {
         if (isTightSpacing()) {
           const titlePart = renderSectionTitleHtml(section);
-          if (!hasBody) {
+          if (!hasBody && !prepend && !append) {
             return `<div style="${outerStyle};">${titlePart}</div>`;
           }
-          const bodyPart = renderSectionBodyHtml(section, items, false, true);
-          if (section.layout === "list") {
-            return `<div style="${outerStyle};">${titlePart}<br>\n${bodyPart}\n</div>`;
+          let inner = prepend;
+          if (hasBody) {
+            const bodyPart = renderSectionBodyHtml(section, items, false, true);
+            inner += `${titlePart}<br>\n${bodyPart}`;
+          } else {
+            inner += titlePart;
           }
-          return `<div style="${outerStyle};">${titlePart}<br>\n${bodyPart}\n</div>`;
+          inner += append;
+          return `<div style="${outerStyle};">${inner}\n</div>`;
         }
 
         const titleHtml = `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
@@ -1841,20 +1886,18 @@
     }
 
     function linkHtml(url) {
-      const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
-      const style = auxBlockStyle();
-      return `<div style="${style};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a></div>`;
+      return `<div style="${auxBlockStyle()};">${linkHtmlFragment(url)}</div>`;
     }
 
     function footerHtml(url) {
       const style = auxBlockStyle();
+      if (isTightSpacing()) {
+        return `<div style="${style};">${footerHtmlFragment(url).replace(/^<br>\n/, "")}</div>`;
+      }
       const helpText = styledSpan(
         "Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :",
         doc.styles.bottomText
       );
-      if (isTightSpacing()) {
-        return `<div style="${style};">${helpText}<br>\n${escapeHtml(url)}</div>`;
-      }
       return `<div style="${style};">${helpText}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`;
     }
 
@@ -1867,15 +1910,31 @@
       const parts = [];
       let linkRendered = false;
       let footerRendered = false;
+      const connexionIdx = getConnexionSectionIndex();
       const footerAfterIdx = getFooterInsertAfterIndex();
+      const groupConnexionBlock = isTightSpacing() && connexionIdx >= 0;
 
       doc.sections.forEach((section, idx) => {
-        const sectionHtml = renderSectionHtml(section, { afterFooter: footerRendered });
-        if (sectionHtml) parts.push(sectionHtml);
-        if (doc.includeVideoLink && idx === 0) {
+        const isConnexion = idx === connexionIdx;
+        const opts = { afterFooter: footerRendered };
+
+        if (groupConnexionBlock && isConnexion) {
+          if (doc.includeVideoLink) {
+            opts.prependLinkHtml = linkHtmlFragment(url);
+            linkRendered = true;
+          }
+          if (doc.includeFooterHelp && idx === footerAfterIdx) {
+            opts.appendFooterHtml = footerHtmlFragment(url);
+            footerRendered = true;
+          }
+        } else if (doc.includeVideoLink && isConnexion) {
           parts.push(linkHtml(url));
           linkRendered = true;
         }
+
+        const sectionHtml = renderSectionHtml(section, opts);
+        if (sectionHtml) parts.push(sectionHtml);
+
         if (doc.includeFooterHelp && !footerRendered && idx === footerAfterIdx) {
           parts.push(footerHtml(url));
           footerRendered = true;
