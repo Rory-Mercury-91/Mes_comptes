@@ -775,6 +775,12 @@
 
   <main>
     <section class="card">
+      <div class="data-toolbar">
+        <button type="button" id="btnExport">Exporter les informations</button>
+        <button type="button" id="btnImport">Charger les informations</button>
+        <input type="file" id="importFileInput" accept=".json,application/json" hidden />
+      </div>
+
       <div class="mode-switch">
         <button type="button" class="mode-btn active" id="btnModeVideo">Générateur consigne vidéo</button>
         <button type="button" class="mode-btn" id="btnModeSimple">Générateur remarque simple</button>
@@ -809,8 +815,9 @@
           réordonner les champs. Le type <strong>Consigne importante</strong> génère un bandeau rouge.
           Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
           Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour un bloc
-          &lt;details&gt;/&lt;summary&gt;. Couleurs et styles : panneau <strong>Mise en forme</strong>.
-        </p>
+          &lt;details&gt;/&lt;summary&gt;.         Couleurs et styles : panneau <strong>Mise en forme</strong>.
+        Utilisez <strong>Exporter / Charger les informations</strong> pour sauvegarder ou reprendre vos saisies.
+      </p>
       </div>
 
       <div id="simpleModePanel" hidden>
@@ -980,9 +987,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v10";
-    const APP_VERSION = "2.7.5";
-    const APP_BUILD = "20260708f";
+    const STORAGE_KEY = "generateur-info-video-v11";
+    const APP_VERSION = "2.8";
+    const APP_BUILD = "20260708g";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -2030,6 +2037,71 @@
       setTimeout(() => toast.classList.remove("show"), 2200);
     }
 
+    /**
+     * Rafraîchit toute l'interface à partir du document courant.
+     */
+    function refreshUIFromDoc() {
+      simpleEditorMounted = false;
+      document.getElementById("urlInput").value = doc.url;
+      document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
+      document.getElementById("spacingInput").value = doc.spacing;
+      applyModeUI();
+      if (doc.mode === "simple") mountSimpleEditor();
+      renderSections();
+      renderStyleControls();
+      updateOutput();
+    }
+
+    /**
+     * Exporte les données saisies dans un fichier JSON.
+     */
+    function exportDoc() {
+      const payload = {
+        exportVersion: 1,
+        exportedAt: new Date().toISOString(),
+        generator: "generateur-remarques",
+        appVersion: APP_VERSION,
+        mode: doc.mode,
+        url: doc.url,
+        linkText: doc.linkText,
+        simpleContent: doc.simpleContent,
+        spacing: doc.spacing,
+        sections: doc.sections,
+        styles: doc.styles,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `generateur-remarques-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("Informations exportées.");
+    }
+
+    /**
+     * Charge les données depuis un fichier JSON exporté.
+     * @param {File} file Fichier de sauvegarde
+     */
+    function importDoc(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed || typeof parsed !== "object") throw new Error("Format invalide");
+          doc = normalizeDoc(parsed);
+          refreshUIFromDoc();
+          saveDoc();
+          showToast("Informations chargées avec succès.");
+        } catch (_) {
+          alert("Impossible de charger ce fichier. Utilisez une sauvegarde exportée depuis ce générateur.");
+        }
+        document.getElementById("importFileInput").value = "";
+      };
+      reader.readAsText(file);
+    }
+
     function toggleFieldModalNoticeOptions() {
       const isNotice = document.getElementById("fieldType").value === "notice";
       document.getElementById("fieldNoticeOptions").hidden = !isNotice;
@@ -2127,22 +2199,15 @@
     function resetAll() {
       if (!confirm("Réinitialiser toutes les sections, champs et mise en forme ?")) return;
       doc = defaultDoc();
-      simpleEditorMounted = false;
       saveDoc();
-      document.getElementById("urlInput").value = doc.url;
-      document.getElementById("linkTextInput").value = doc.linkText;
-      document.getElementById("spacingInput").value = doc.spacing;
-      if (doc.mode === "simple") mountSimpleEditor();
-      applyModeUI();
-      renderSections();
-      renderStyleControls();
+      refreshUIFromDoc();
     }
 
     function resetSimple() {
       if (!confirm("Effacer le texte de la remarque ?")) return;
       doc.simpleContent = "";
-      simpleEditorMounted = false;
       saveDoc();
+      simpleEditorMounted = false;
       mountSimpleEditor();
       updateOutput();
     }
@@ -2160,6 +2225,14 @@
     }
 
     /* --- Câblage des événements --- */
+    document.getElementById("btnExport").addEventListener("click", exportDoc);
+    document.getElementById("btnImport").addEventListener("click", () => {
+      document.getElementById("importFileInput").click();
+    });
+    document.getElementById("importFileInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) importDoc(file);
+    });
     document.getElementById("btnAddSection").addEventListener("click", openAddSection);
     document.getElementById("btnAddField").addEventListener("click", () => openAddField(null));
     document.getElementById("btnReset").addEventListener("click", resetAll);
@@ -2204,8 +2277,7 @@
     /* --- Initialisation --- */
     document.getElementById("appTitle").title = "Version " + APP_VERSION + " (" + APP_BUILD + ")";
     loadDoc();
-    document.getElementById("urlInput").value = doc.url;
-    document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
+    refreshUIFromDoc();
     document.getElementById("urlInput").addEventListener("input", (e) => {
       doc.url = e.target.value;
       saveDoc();
@@ -2233,11 +2305,6 @@
       saveDoc();
       updateOutput();
     });
-
-    renderSections();
-    renderStyleControls();
-    applyModeUI();
-    if (doc.mode === "simple") mountSimpleEditor();
   </script>
 </body>
 </html>
