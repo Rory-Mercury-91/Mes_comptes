@@ -950,8 +950,8 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v9";
-    const APP_VERSION = "2.7.2";
-    const APP_BUILD = "20260708c";
+    const APP_VERSION = "2.7.3";
+    const APP_BUILD = "20260708d";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1024,8 +1024,30 @@
       const toolbar = document.createElement("div");
       toolbar.className = "richtext-toolbar";
 
+      /** @type {Range|null} Sélection mémorisée avant clic sur la barre d'outils */
+      let savedRange = null;
+
+      const saveEditorSelection = () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+          savedRange = sel.getRangeAt(0).cloneRange();
+        }
+      };
+
+      const restoreEditorSelection = () => {
+        if (!savedRange) return false;
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+        return true;
+      };
+
+      editor.addEventListener("keyup", saveEditorSelection);
+      editor.addEventListener("mouseup", saveEditorSelection);
+
       const run = (cmd, value) => {
         editor.focus();
+        restoreEditorSelection();
         document.execCommand(cmd, false, value ?? null);
         onChange();
       };
@@ -1036,7 +1058,10 @@
         btn.className = "richtext-btn" + (className ? " " + className : "");
         btn.textContent = label;
         btn.title = title;
-        btn.addEventListener("mousedown", (e) => e.preventDefault());
+        btn.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          saveEditorSelection();
+        });
         btn.addEventListener("click", () => run(cmd));
         toolbar.appendChild(btn);
       };
@@ -1053,6 +1078,7 @@
        */
       const applyFontSize = (sizeEm) => {
         editor.focus();
+        restoreEditorSelection();
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
 
@@ -1072,36 +1098,32 @@
         onChange();
       };
 
-      const sizeWrap = document.createElement("label");
-      sizeWrap.className = "richtext-size";
-      sizeWrap.title = "Taille du texte sélectionné";
-      sizeWrap.appendChild(document.createTextNode("Taille"));
-      const sizeSelect = document.createElement("select");
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Taille…";
-      placeholder.disabled = true;
-      placeholder.selected = true;
-      sizeSelect.appendChild(placeholder);
+      const sizeWrap = document.createElement("span");
+      sizeWrap.className = "richtext-size-group";
+      const sizeLabel = document.createElement("span");
+      sizeLabel.className = "richtext-size-label";
+      sizeLabel.textContent = "Taille";
+      sizeWrap.appendChild(sizeLabel);
+
       [
-        { value: "0.85em", label: "Petit" },
-        { value: "1em", label: "Normal" },
-        { value: "1.2em", label: "Grand" },
-        { value: "1.5em", label: "Très grand" },
-        { value: "2em", label: "Énorme" },
+        { value: "0.85em", label: "P", title: "Petit" },
+        { value: "1em", label: "N", title: "Normal" },
+        { value: "1.2em", label: "G", title: "Grand" },
+        { value: "1.5em", label: "TG", title: "Très grand" },
+        { value: "2em", label: "XG", title: "Énorme" },
       ].forEach((opt) => {
-        const o = document.createElement("option");
-        o.value = opt.value;
-        o.textContent = opt.label;
-        sizeSelect.appendChild(o);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "richtext-btn richtext-size-btn";
+        btn.textContent = opt.label;
+        btn.title = opt.title;
+        btn.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          saveEditorSelection();
+        });
+        btn.addEventListener("click", () => applyFontSize(opt.value));
+        sizeWrap.appendChild(btn);
       });
-      sizeSelect.addEventListener("mousedown", (e) => e.preventDefault());
-      sizeSelect.addEventListener("change", (e) => {
-        const val = e.target.value;
-        if (val) applyFontSize(val);
-        e.target.selectedIndex = 0;
-      });
-      sizeWrap.appendChild(sizeSelect);
       toolbar.appendChild(sizeWrap);
 
       const textColor = document.createElement("label");
@@ -1111,7 +1133,10 @@
       const textColorInput = document.createElement("input");
       textColorInput.type = "color";
       textColorInput.value = "#000000";
-      textColorInput.addEventListener("mousedown", (e) => e.preventDefault());
+      textColorInput.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        saveEditorSelection();
+      });
       textColorInput.addEventListener("input", (e) => run("foreColor", e.target.value));
       textColor.appendChild(textColorInput);
       toolbar.appendChild(textColor);
@@ -1123,7 +1148,10 @@
       const bgColorInput = document.createElement("input");
       bgColorInput.type = "color";
       bgColorInput.value = "#ffff00";
-      bgColorInput.addEventListener("mousedown", (e) => e.preventDefault());
+      bgColorInput.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        saveEditorSelection();
+      });
       bgColorInput.addEventListener("input", (e) => run("backColor", e.target.value));
       bgColor.appendChild(bgColorInput);
       toolbar.appendChild(bgColor);
@@ -1133,7 +1161,10 @@
       clearBtn.className = "richtext-btn";
       clearBtn.textContent = "Effacer style";
       clearBtn.title = "Retirer la mise en forme de la sélection";
-      clearBtn.addEventListener("mousedown", (e) => e.preventDefault());
+      clearBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        saveEditorSelection();
+      });
       clearBtn.addEventListener("click", () => run("removeFormat"));
       toolbar.appendChild(clearBtn);
 
