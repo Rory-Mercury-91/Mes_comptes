@@ -694,26 +694,50 @@
   <div class="toast" id="toast">HTML copié dans le presse-papiers !</div>
 
   <div class="modal-overlay" id="addFieldModal">
-    <div class="modal">
+    <div class="modal modal-section">
       <h3>Ajouter un champ</h3>
-      <label for="fieldSection">Section de destination</label>
-      <select id="fieldSection"></select>
-      <label for="fieldLabel">Libellé affiché</label>
-      <input type="text" id="fieldLabel" placeholder="Libellé du champ" />
-      <label for="fieldType">Type de champ</label>
-      <select id="fieldType">
-        <option value="normal">Champ classique (libellé + valeur)</option>
-        <option value="notice">Consigne importante (bandeau rouge)</option>
-      </select>
-      <label for="fieldValue">Valeur</label>
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
-        <input type="text" id="fieldValue" placeholder="Saisir la valeur" style="flex:1;margin:0;" />
-        <button type="button" class="btn-img" id="btnFieldInsertImage" title="Insérer le code &lt;img&gt; de l'alarme">+ Image</button>
+      <p class="modal-desc">
+        Le champ sera ajouté à la fin de la section choisie. Utilisez ensuite les
+        flèches ▲ ▼ pour modifier son ordre d'affichage.
+      </p>
+
+      <div class="modal-field">
+        <label for="fieldSection">Section de destination</label>
+        <select id="fieldSection"></select>
       </div>
-      <label class="ctrl" id="fieldWrapAlarmsWrap" style="display:none;margin-bottom:0.75rem;">
-        <input type="checkbox" id="fieldWrapAlarms" checked>
-        Ajouter automatiquement les icônes d'alarme avant et après le texte
-      </label>
+
+      <div class="modal-field">
+        <label for="fieldType">Type de champ</label>
+        <select id="fieldType">
+          <option value="normal">Champ classique (libellé + valeur)</option>
+          <option value="notice">Consigne importante (bandeau rouge)</option>
+        </select>
+      </div>
+
+      <div class="modal-field" id="fieldLabelWrap">
+        <label for="fieldLabel">Libellé</label>
+        <input type="text" id="fieldLabel" placeholder="Libellé du champ" />
+      </div>
+
+      <div class="modal-field">
+        <label for="fieldValue">Valeur</label>
+        <div class="modal-value-row">
+          <input type="text" id="fieldValue" placeholder="Saisir la valeur" />
+          <button type="button" class="btn-img" id="btnFieldInsertImage" title="Insérer le code &lt;img&gt; de l'alarme">+ Image</button>
+        </div>
+      </div>
+
+      <div id="fieldNoticeOptions" class="modal-panel" hidden>
+        <p class="modal-panel-title">Options consigne</p>
+        <label class="modal-check-row" for="fieldWrapAlarms">
+          <input type="checkbox" id="fieldWrapAlarms" checked>
+          <span class="modal-check-row-text">
+            <strong>Icônes d'alarme automatiques</strong>
+            <small>Ajoute les images avant et après le texte si aucun HTML n'est saisi.</small>
+          </span>
+        </label>
+      </div>
+
       <div class="modal-actions">
         <button type="button" id="btnFieldCancel">Annuler</button>
         <button type="button" class="btn-primary" id="btnFieldConfirm">Ajouter</button>
@@ -778,7 +802,7 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v6";
-    const APP_VERSION = "2.1";
+    const APP_VERSION = "2.2";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1557,9 +1581,11 @@
 
     function toggleFieldModalNoticeOptions() {
       const isNotice = document.getElementById("fieldType").value === "notice";
-      document.getElementById("fieldWrapAlarmsWrap").style.display = isNotice ? "flex" : "none";
-      const labelInput = document.getElementById("fieldLabel");
-      labelInput.placeholder = "Libellé du champ";
+      document.getElementById("fieldNoticeOptions").hidden = !isNotice;
+      document.getElementById("fieldLabelWrap").hidden = isNotice;
+      if (isNotice) {
+        document.getElementById("fieldLabel").value = "";
+      }
     }
 
     /* --- Modale : ajout de champ --- */
@@ -1577,6 +1603,8 @@
       document.getElementById("fieldValue").value = "";
       document.getElementById("fieldType").value = "normal";
       document.getElementById("fieldWrapAlarms").checked = true;
+      document.getElementById("fieldNoticeOptions").hidden = true;
+      document.getElementById("fieldLabelWrap").hidden = false;
       toggleFieldModalNoticeOptions();
       document.getElementById("addFieldModal").classList.add("open");
       document.getElementById("fieldLabel").focus();
