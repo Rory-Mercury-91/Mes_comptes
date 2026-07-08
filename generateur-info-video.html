@@ -170,6 +170,23 @@
       color: var(--text);
     }
 
+    .file-url-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      width: 100%;
+    }
+
+    .file-url-row input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .file-url-row button {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
     .form-options {
       display: flex;
       flex-direction: column;
@@ -840,12 +857,28 @@
             <label for="linkTextInput">Texte du lien</label>
             <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
           </div>
+          <div class="form-row">
+            <label for="fileUrlInput">URL fichier</label>
+            <div class="file-url-row">
+              <input type="text" id="fileUrlInput" placeholder="https://.../document.pdf" />
+              <button type="button" id="btnPickFile">Parcourir…</button>
+              <input type="file" id="fileUrlPicker" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/pdf" hidden />
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="fileLinkTextInput">Texte du lien fichier</label>
+            <input type="text" id="fileLinkTextInput" placeholder="Saisir la valeur" />
+          </div>
         </div>
 
         <div class="form-options">
           <label class="ctrl">
             <input type="checkbox" id="includeVideoLink" checked>
             Inclure le lien vidéo dans le HTML généré
+          </label>
+          <label class="ctrl">
+            <input type="checkbox" id="includeFileLink">
+            Inclure le lien fichier dans le HTML généré
           </label>
           <label class="ctrl">
             <input type="checkbox" id="includeFooterHelp" checked>
@@ -864,6 +897,7 @@
           &lt;details&gt;/&lt;summary&gt;. Couleurs et styles : panneau <strong>Mise en forme</strong>.
           Décochez le lien vidéo ou le texte du bas si vous n'en avez pas besoin.
           Le lien vidéo reste toujours juste au-dessus de la section <strong>connexion vidéo</strong> et bouge avec elle.
+          Le lien fichier (PDF, etc.) s'affiche en fin de section <strong>Informations diverses</strong> : saisissez l'URL sur le serveur, ou utilisez <strong>Parcourir…</strong> pour reprendre le nom du fichier.
           Utilisez <strong>Exporter / Charger les informations</strong> pour sauvegarder ou reprendre vos saisies.
         </p>
       </div>
@@ -1025,13 +1059,14 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v19";
-    const APP_VERSION = "2.16";
-    const APP_BUILD = "20260708o";
+    const STORAGE_KEY = "generateur-info-video-v20";
+    const APP_VERSION = "2.17";
+    const APP_BUILD = "20260708p";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
     const DEFAULT_LINK_TEXT = "CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !";
+    const DEFAULT_FILE_LINK_TEXT = "OUVRIR LE DOCUMENT";
 
     // Couleur de fond de simulation de l'aperçu (préférence locale, hors HTML copié)
     let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
@@ -1040,6 +1075,7 @@
     const DEFAULT_STYLE_COLORS = {
       diversTitle: "#2E7D32",
       link: "#D97B1C",
+      fileLink: "#1565C0",
       connexionTitle: "#2E86C1",
       labels: "#000000",
       notice: "#C62828",
@@ -1459,7 +1495,10 @@
         siteName: "",
         url: "",
         linkText: DEFAULT_LINK_TEXT,
+        fileUrl: "",
+        fileLinkText: DEFAULT_FILE_LINK_TEXT,
         includeVideoLink: true,
+        includeFileLink: false,
         includeFooterHelp: true,
         simpleContent: "",
         spacing: 0,
@@ -1492,6 +1531,7 @@
         ],
         styles: {
           link: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true }),
+          fileLink: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
           labels: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
           notice: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
           summary: makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false }),
@@ -1511,7 +1551,10 @@
         siteName: d.siteName || "",
         url: d.url || "",
         linkText: d.linkText || DEFAULT_LINK_TEXT,
+        fileUrl: d.fileUrl || "",
+        fileLinkText: d.fileLinkText || DEFAULT_FILE_LINK_TEXT,
         includeVideoLink: d.includeVideoLink !== false,
+        includeFileLink: !!d.includeFileLink,
         includeFooterHelp: d.includeFooterHelp !== false,
         simpleContent: d.simpleContent || "",
         spacing: 0,
@@ -1553,6 +1596,7 @@
       const st = d.styles || {};
       out.styles = {
         link: makeStyle(st.link || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2 }),
+        fileLink: makeStyle(st.fileLink || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
         labels: makeStyle(st.labels || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
         notice: makeStyle(st.notice || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
         summary: makeStyle(st.summary || { size: 1, bold: false, underline: false }),
@@ -1741,6 +1785,16 @@
     }
 
     /**
+     * Index de la section « informations diverses » dans le document.
+     * @returns {number} Indice de section, ou -1 si absente
+     */
+    function getDiversSectionIndex() {
+      const byId = doc.sections.findIndex((s) => s.id === "sec_divers");
+      if (byId >= 0) return byId;
+      return doc.sections.findIndex((s) => s.isDefault && s.layout === "inline");
+    }
+
+    /**
      * Index de la section « connexion vidéo » dans le document.
      * @returns {number} Indice de section, ou -1 si absente
      */
@@ -1772,6 +1826,16 @@
     function linkHtmlFragment(url) {
       const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
       return `<a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a>`;
+    }
+
+    /**
+     * Fragment HTML du lien fichier (PDF, etc.) — ouverture dans l'application par défaut du navigateur.
+     * @param {string} fileUrl URL ou chemin du fichier sur le serveur
+     * @returns {string} HTML du lien
+     */
+    function fileLinkHtmlFragment(fileUrl) {
+      const text = escapeHtml(doc.fileLinkText || DEFAULT_FILE_LINK_TEXT);
+      return `<a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener noreferrer" style="${inlineStyle(doc.styles.fileLink)}">${text}</a>`;
     }
 
     /**
@@ -1847,7 +1911,7 @@
       const items = section.fields.filter((f) => f.value.trim() !== "");
       const hasBody = items.length > 0;
       const prepend = opts.prependLinkHtml ? `${opts.prependLinkHtml}<br>\n` : "";
-      const append = opts.appendFooterHtml || "";
+      const append = `${opts.appendFooterHtml || ""}${opts.appendExtraHtml || ""}`;
 
       if (!section.collapsible) {
         if (isTightSpacing()) {
@@ -1886,6 +1950,10 @@
       return `<div style="${outerStyle};">${titlePart}${separator}${detailsBlock}</div>`;
     }
 
+    function fileLinkHtml(fileUrl) {
+      return `<div style="${auxBlockStyle()};">${fileLinkHtmlFragment(fileUrl)}</div>`;
+    }
+
     function linkHtml(url) {
       return `<div style="${auxBlockStyle()};">${linkHtmlFragment(url)}</div>`;
     }
@@ -1912,12 +1980,18 @@
       let linkRendered = false;
       let footerRendered = false;
       const connexionIdx = getConnexionSectionIndex();
+      const diversIdx = getDiversSectionIndex();
       const footerAfterIdx = getFooterInsertAfterIndex();
       const groupConnexionBlock = isTightSpacing() && connexionIdx >= 0;
 
       doc.sections.forEach((section, idx) => {
         const isConnexion = idx === connexionIdx;
+        const isDivers = idx === diversIdx;
         const opts = { afterFooter: footerRendered };
+
+        if (isDivers && doc.includeFileLink && doc.fileUrl.trim()) {
+          opts.appendExtraHtml = `<br>\n${fileLinkHtmlFragment(doc.fileUrl.trim())}`;
+        }
 
         if (groupConnexionBlock && isConnexion) {
           if (doc.includeVideoLink) {
@@ -2239,6 +2313,7 @@
         style: s.titleStyle,
       }));
       targets.push({ id: "link", label: "Style du lien vidéo", style: doc.styles.link });
+      targets.push({ id: "fileLink", label: "Style du lien fichier", style: doc.styles.fileLink });
       targets.push({ id: "labels", label: "Libellés des champs", style: doc.styles.labels });
       targets.push({ id: "notice", label: "Consignes importantes", style: doc.styles.notice });
       targets.push({ id: "summary", label: "Lien d'ouverture (summary)", style: doc.styles.summary });
@@ -2248,6 +2323,7 @@
 
     function findStyleById(id) {
       if (id === "link") return doc.styles.link;
+      if (id === "fileLink") return doc.styles.fileLink;
       if (id === "labels") return doc.styles.labels;
       if (id === "notice") return doc.styles.notice;
       if (id === "summary") return doc.styles.summary;
@@ -2328,6 +2404,7 @@
         });
       });
       doc.styles.link = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true });
+      doc.styles.fileLink = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true });
       doc.styles.labels = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 });
       doc.styles.notice = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false });
       doc.styles.summary = makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false });
@@ -2352,7 +2429,10 @@
       document.getElementById("siteNameInput").value = doc.siteName || "";
       document.getElementById("urlInput").value = doc.url;
       document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
+      document.getElementById("fileUrlInput").value = doc.fileUrl || "";
+      document.getElementById("fileLinkTextInput").value = doc.fileLinkText || DEFAULT_FILE_LINK_TEXT;
       document.getElementById("includeVideoLink").checked = doc.includeVideoLink !== false;
+      document.getElementById("includeFileLink").checked = !!doc.includeFileLink;
       document.getElementById("includeFooterHelp").checked = doc.includeFooterHelp !== false;
       applyModeUI();
       if (doc.mode === "simple") mountSimpleEditor();
@@ -2374,7 +2454,10 @@
         mode: doc.mode,
         url: doc.url,
         linkText: doc.linkText,
+        fileUrl: doc.fileUrl,
+        fileLinkText: doc.fileLinkText,
         includeVideoLink: doc.includeVideoLink,
+        includeFileLink: doc.includeFileLink,
         includeFooterHelp: doc.includeFooterHelp,
         simpleContent: doc.simpleContent,
         spacing: doc.spacing,
@@ -2604,10 +2687,54 @@
       saveDoc();
       updateOutput();
     });
+    document.getElementById("fileUrlInput").addEventListener("input", (e) => {
+      doc.fileUrl = e.target.value;
+      saveDoc();
+      updateOutput();
+    });
+    document.getElementById("fileLinkTextInput").addEventListener("input", (e) => {
+      doc.fileLinkText = e.target.value || DEFAULT_FILE_LINK_TEXT;
+      saveDoc();
+      updateOutput();
+    });
     document.getElementById("includeVideoLink").addEventListener("change", (e) => {
       doc.includeVideoLink = e.target.checked;
       saveDoc();
       updateOutput();
+    });
+    document.getElementById("includeFileLink").addEventListener("change", (e) => {
+      doc.includeFileLink = e.target.checked;
+      saveDoc();
+      updateOutput();
+    });
+    document.getElementById("btnPickFile").addEventListener("click", () => {
+      document.getElementById("fileUrlPicker").click();
+    });
+    document.getElementById("fileUrlPicker").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const name = file.name;
+      const fileUrlInput = document.getElementById("fileUrlInput");
+      const fileLinkTextInput = document.getElementById("fileLinkTextInput");
+      const currentUrl = fileUrlInput.value.trim();
+      if (!currentUrl) {
+        fileUrlInput.value = name;
+        doc.fileUrl = name;
+      } else if (currentUrl.endsWith("/")) {
+        fileUrlInput.value = currentUrl + name;
+        doc.fileUrl = fileUrlInput.value;
+      }
+      if (!fileLinkTextInput.value.trim() || fileLinkTextInput.value === DEFAULT_FILE_LINK_TEXT) {
+        const label = name.replace(/\.[^.]+$/, "") || name;
+        fileLinkTextInput.value = label;
+        doc.fileLinkText = label;
+      }
+      doc.includeFileLink = true;
+      document.getElementById("includeFileLink").checked = true;
+      saveDoc();
+      updateOutput();
+      showToast("Fichier repéré — complétez l'URL serveur si le nom seul ne suffit pas.");
+      e.target.value = "";
     });
     document.getElementById("includeFooterHelp").addEventListener("change", (e) => {
       doc.includeFooterHelp = e.target.checked;
