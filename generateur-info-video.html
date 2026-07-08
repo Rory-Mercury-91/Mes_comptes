@@ -1075,6 +1075,12 @@
       sizeWrap.title = "Taille du texte sélectionné";
       sizeWrap.appendChild(document.createTextNode("Taille"));
       const sizeSelect = document.createElement("select");
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Taille…";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      sizeSelect.appendChild(placeholder);
       [
         { value: "0.85em", label: "Petit" },
         { value: "1em", label: "Normal" },
@@ -1087,11 +1093,11 @@
         o.textContent = opt.label;
         sizeSelect.appendChild(o);
       });
-      sizeSelect.value = "1em";
       sizeSelect.addEventListener("mousedown", (e) => e.preventDefault());
       sizeSelect.addEventListener("change", (e) => {
-        applyFontSize(e.target.value);
-        e.target.value = "1em";
+        const val = e.target.value;
+        if (val) applyFontSize(val);
+        e.target.selectedIndex = 0;
       });
       sizeWrap.appendChild(sizeSelect);
       toolbar.appendChild(sizeWrap);
@@ -2121,7 +2127,7 @@
     });
 
     /* --- Initialisation --- */
-    document.getElementById("appVersion").textContent = "v" + APP_VERSION;
+    document.getElementById("appVersion").textContent = "v" + APP_VERSION + " (" + APP_BUILD + ")";
     loadDoc();
     document.getElementById("urlInput").value = doc.url;
     document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
