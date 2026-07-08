@@ -405,6 +405,8 @@
 
     .modal.modal-section {
       width: min(500px, 100%);
+      max-height: min(92vh, 900px);
+      overflow-y: auto;
     }
 
     .modal h3 {
@@ -449,6 +451,8 @@
       padding: 0.85rem;
       margin-bottom: 1rem;
       background: var(--surface);
+      min-width: 0;
+      overflow: hidden;
     }
 
     .modal-panel-title {
@@ -467,6 +471,7 @@
       cursor: pointer;
       margin: 0;
       font-weight: normal;
+      min-width: 0;
     }
 
     .modal-check-row input[type="checkbox"] {
@@ -485,6 +490,10 @@
       font-size: 0.875rem;
       color: var(--text);
       line-height: 1.35;
+      min-width: 0;
+      flex: 1;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .modal-check-row-text strong {
@@ -495,6 +504,7 @@
       font-size: 0.78rem;
       color: var(--muted);
       font-weight: normal;
+      white-space: normal;
     }
 
     .modal-subpanel {
@@ -732,8 +742,8 @@
         <label class="modal-check-row" for="fieldWrapAlarms">
           <input type="checkbox" id="fieldWrapAlarms" checked>
           <span class="modal-check-row-text">
-            <strong>Icônes d'alarme automatiques</strong>
-            <small>Ajoute les images avant et après le texte si aucun HTML n'est saisi.</small>
+            <strong>Icônes d'alarme auto</strong>
+            <small>Images avant et après le texte.</small>
           </span>
         </label>
       </div>
@@ -802,7 +812,7 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v6";
-    const APP_VERSION = "2.2";
+    const APP_VERSION = "2.3";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1433,7 +1443,7 @@
               updateOutput();
             });
             wrapLabel.appendChild(wrapCheck);
-            wrapLabel.appendChild(document.createTextNode(" Icônes auto avant/après"));
+            wrapLabel.appendChild(document.createTextNode(" Icônes auto"));
 
             const srcLabel = document.createElement("label");
             srcLabel.textContent = "Chemin image PNG :";
