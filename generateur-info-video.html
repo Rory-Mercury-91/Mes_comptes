@@ -518,8 +518,9 @@
         réordonner les champs (l'ordre à l'écran = l'ordre dans le HTML généré). Le type
         <strong>Consigne importante</strong> génère un bandeau rouge avec icônes d'alarme.
         Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
-        Cochez <strong>Réductible</strong> sur une section pour générer un bloc
-        &lt;details&gt;/&lt;summary&gt; (titre visible, contenu repliable).
+        Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour générer un bloc
+        &lt;details&gt;/&lt;summary&gt;. Les sections d'origine restent toujours visibles.
+        Couleurs et styles : panneau <strong>Mise en forme</strong> (titres, summary, libellés…).
       </p>
     </section>
 
@@ -625,7 +626,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v5";
+    const STORAGE_KEY = "generateur-info-video-v6";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -814,9 +815,9 @@
           title: s.title || "Section",
           layout: s.layout === "list" ? "list" : "inline",
           isDefault: !!s.isDefault,
-          collapsible: !!s.collapsible,
+          collapsible: s.isDefault ? false : !!s.collapsible,
           summaryText: s.summaryText || DEFAULT_SUMMARY_TEXT,
-          openByDefault: !!s.openByDefault,
+          openByDefault: s.isDefault ? false : !!s.openByDefault,
           titleStyle: makeStyle(s.titleStyle || {}),
           fields: rawFields.map((f) => ({
             id: f.id || uid(),
@@ -1096,53 +1097,55 @@
         head.appendChild(delBtn);
         block.appendChild(head);
 
-        const sectionOpts = document.createElement("div");
-        sectionOpts.className = "section-options";
+        if (!section.isDefault) {
+          const sectionOpts = document.createElement("div");
+          sectionOpts.className = "section-options";
 
-        const collapsibleLabel = document.createElement("label");
-        collapsibleLabel.className = "ctrl";
-        const collapsibleCheck = document.createElement("input");
-        collapsibleCheck.type = "checkbox";
-        collapsibleCheck.checked = !!section.collapsible;
-        collapsibleCheck.addEventListener("change", () => {
-          section.collapsible = collapsibleCheck.checked;
-          saveDoc();
-          renderSections();
-          updateOutput();
-        });
-        collapsibleLabel.appendChild(collapsibleCheck);
-        collapsibleLabel.appendChild(document.createTextNode(" Réductible"));
+          const collapsibleLabel = document.createElement("label");
+          collapsibleLabel.className = "ctrl";
+          const collapsibleCheck = document.createElement("input");
+          collapsibleCheck.type = "checkbox";
+          collapsibleCheck.checked = !!section.collapsible;
+          collapsibleCheck.addEventListener("change", () => {
+            section.collapsible = collapsibleCheck.checked;
+            saveDoc();
+            renderSections();
+            updateOutput();
+          });
+          collapsibleLabel.appendChild(collapsibleCheck);
+          collapsibleLabel.appendChild(document.createTextNode(" Réductible"));
 
-        const summaryInput = document.createElement("input");
-        summaryInput.type = "text";
-        summaryInput.placeholder = DEFAULT_SUMMARY_TEXT;
-        summaryInput.value = section.summaryText || DEFAULT_SUMMARY_TEXT;
-        summaryInput.disabled = !section.collapsible;
-        summaryInput.title = "Texte affiché sur le lien d'ouverture";
-        summaryInput.addEventListener("input", () => {
-          section.summaryText = summaryInput.value || DEFAULT_SUMMARY_TEXT;
-          saveDoc();
-          updateOutput();
-        });
+          const summaryInput = document.createElement("input");
+          summaryInput.type = "text";
+          summaryInput.placeholder = DEFAULT_SUMMARY_TEXT;
+          summaryInput.value = section.summaryText || DEFAULT_SUMMARY_TEXT;
+          summaryInput.disabled = !section.collapsible;
+          summaryInput.title = "Texte affiché sur le lien d'ouverture";
+          summaryInput.addEventListener("input", () => {
+            section.summaryText = summaryInput.value || DEFAULT_SUMMARY_TEXT;
+            saveDoc();
+            updateOutput();
+          });
 
-        const openLabel = document.createElement("label");
-        openLabel.className = "ctrl";
-        const openCheck = document.createElement("input");
-        openCheck.type = "checkbox";
-        openCheck.checked = !!section.openByDefault;
-        openCheck.disabled = !section.collapsible;
-        openCheck.addEventListener("change", () => {
-          section.openByDefault = openCheck.checked;
-          saveDoc();
-          updateOutput();
-        });
-        openLabel.appendChild(openCheck);
-        openLabel.appendChild(document.createTextNode(" Ouverte par défaut"));
+          const openLabel = document.createElement("label");
+          openLabel.className = "ctrl";
+          const openCheck = document.createElement("input");
+          openCheck.type = "checkbox";
+          openCheck.checked = !!section.openByDefault;
+          openCheck.disabled = !section.collapsible;
+          openCheck.addEventListener("change", () => {
+            section.openByDefault = openCheck.checked;
+            saveDoc();
+            updateOutput();
+          });
+          openLabel.appendChild(openCheck);
+          openLabel.appendChild(document.createTextNode(" Ouverte par défaut"));
 
-        sectionOpts.appendChild(collapsibleLabel);
-        sectionOpts.appendChild(summaryInput);
-        sectionOpts.appendChild(openLabel);
-        block.appendChild(sectionOpts);
+          sectionOpts.appendChild(collapsibleLabel);
+          sectionOpts.appendChild(summaryInput);
+          sectionOpts.appendChild(openLabel);
+          block.appendChild(sectionOpts);
+        }
 
         const grid = document.createElement("div");
         grid.className = "fields-grid";
