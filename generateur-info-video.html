@@ -590,7 +590,7 @@
 </head>
 <body>
   <header>
-    <h1>Générateur Info Vidéo</h1>
+    <h1>Générateur Info Vidéo <span id="appVersion" style="font-size:0.75em;color:var(--muted);font-weight:normal;"></span></h1>
     <p>Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.</p>
   </header>
 
@@ -755,6 +755,7 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v6";
+    const APP_VERSION = "2.1";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1683,6 +1684,7 @@
     });
 
     /* --- Initialisation --- */
+    document.getElementById("appVersion").textContent = "v" + APP_VERSION;
     loadDoc();
     document.getElementById("urlInput").value = doc.url;
     document.getElementById("urlInput").addEventListener("input", (e) => {
