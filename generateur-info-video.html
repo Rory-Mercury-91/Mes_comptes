@@ -276,22 +276,24 @@
       background: transparent;
     }
 
-    .richtext-size {
+    .richtext-size-group {
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
-      font-size: 0.78rem;
-      color: var(--muted);
+      gap: 0.2rem;
+      padding: 0 0.2rem;
     }
 
-    .richtext-size select {
-      padding: 0.3rem 0.4rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.8rem;
-      cursor: pointer;
+    .richtext-size-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-right: 0.1rem;
+      white-space: nowrap;
+    }
+
+    .richtext-size-btn {
+      min-width: 30px;
+      font-size: 0.72rem;
+      font-weight: 600;
     }
 
     .richtext-editor {
@@ -948,8 +950,8 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v9";
-    const APP_VERSION = "2.7.1";
-    const APP_BUILD = "20260708b";
+    const APP_VERSION = "2.7.2";
+    const APP_BUILD = "20260708c";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
