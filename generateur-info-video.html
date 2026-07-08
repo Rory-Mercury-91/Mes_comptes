@@ -398,27 +398,127 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.25rem;
+      padding: 1.25rem 1.35rem;
       width: min(420px, 100%);
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
-    .modal h3 { margin: 0 0 1rem; }
+    .modal.modal-section {
+      width: min(500px, 100%);
+    }
 
-    .modal label {
+    .modal h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1.05rem;
+    }
+
+    .modal-desc {
+      margin: 0 0 1rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .modal-field {
+      margin-bottom: 0.9rem;
+    }
+
+    .modal-field > label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-field input,
+    .modal-field select,
+    .modal input:not([type="checkbox"]),
+    .modal select {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      margin-bottom: 0;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .modal-panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      margin-bottom: 1rem;
+      background: var(--surface);
+    }
+
+    .modal-panel-title {
+      margin: 0 0 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .modal-check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      cursor: pointer;
+      margin: 0;
+      font-weight: normal;
+    }
+
+    .modal-check-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin: 0.1rem 0 0;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .modal-check-row-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      font-size: 0.875rem;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .modal-check-row-text strong {
+      font-weight: 600;
+    }
+
+    .modal-check-row-text small {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: normal;
+    }
+
+    .modal-subpanel {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px dashed var(--border);
+    }
+
+    .modal-subpanel[hidden] {
+      display: none !important;
+    }
+
+    .modal label:not(.modal-check-row) {
       display: block;
       font-size: 0.85rem;
       font-weight: 600;
       margin-bottom: 0.25rem;
     }
 
-    .modal input,
-    .modal select {
-      width: 100%;
-      padding: 0.45rem;
+    .modal > label:not(.modal-check-row) + input,
+    .modal > label:not(.modal-check-row) + select,
+    .modal > select,
+    .modal > input:not([type="checkbox"]) {
       margin-bottom: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
     }
 
     .modal-actions {
@@ -599,25 +699,53 @@
   </div>
 
   <div class="modal-overlay" id="addSectionModal">
-    <div class="modal">
+    <div class="modal modal-section">
       <h3>Ajouter une section</h3>
-      <label for="sectionTitle">Titre de la section</label>
-      <input type="text" id="sectionTitle" placeholder="Titre de la section" />
-      <label for="sectionLayout">Type d'affichage</label>
-      <select id="sectionLayout">
-        <option value="inline">Lignes (inline)</option>
-        <option value="list">Liste à puces</option>
-      </select>
-      <label class="ctrl" style="margin-bottom:0.75rem;">
-        <input type="checkbox" id="sectionCollapsible">
-        Section réductible
-      </label>
-      <label for="sectionSummary" id="sectionSummaryLabel">Texte du lien d'ouverture</label>
-      <input type="text" id="sectionSummary" placeholder="Cliquez ici pour afficher !" disabled />
-      <label class="ctrl" id="sectionOpenWrap" style="margin-bottom:0.75rem;">
-        <input type="checkbox" id="sectionOpenByDefault" disabled>
-        Ouverte par défaut
-      </label>
+      <p class="modal-desc">
+        La section sera ajoutée à la suite des sections existantes. Seules les sections
+        ajoutées peuvent être rendues réductibles.
+      </p>
+
+      <div class="modal-field">
+        <label for="sectionTitle">Titre</label>
+        <input type="text" id="sectionTitle" placeholder="Titre de la section" />
+      </div>
+
+      <div class="modal-field">
+        <label for="sectionLayout">Type d'affichage</label>
+        <select id="sectionLayout">
+          <option value="inline">Lignes (inline)</option>
+          <option value="list">Liste à puces</option>
+        </select>
+      </div>
+
+      <div class="modal-panel">
+        <p class="modal-panel-title">Options avancées</p>
+
+        <label class="modal-check-row" for="sectionCollapsible">
+          <input type="checkbox" id="sectionCollapsible">
+          <span class="modal-check-row-text">
+            <strong>Section réductible</strong>
+            <small>Le titre reste visible ; le contenu se replie sous un lien cliquable.</small>
+          </span>
+        </label>
+
+        <div id="sectionCollapsibleOptions" class="modal-subpanel" hidden>
+          <div class="modal-field">
+            <label for="sectionSummary">Texte du lien d'ouverture</label>
+            <input type="text" id="sectionSummary" placeholder="Saisir la valeur" />
+          </div>
+
+          <label class="modal-check-row" for="sectionOpenByDefault">
+            <input type="checkbox" id="sectionOpenByDefault">
+            <span class="modal-check-row-text">
+              <strong>Ouverte par défaut</strong>
+              <small>Afficher le contenu dès le chargement, sans clic.</small>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" id="btnSectionCancel">Annuler</button>
         <button type="button" class="btn-primary" id="btnSectionConfirm">Ajouter</button>
@@ -672,8 +800,10 @@
      */
     function toggleSectionModalOptions() {
       const enabled = document.getElementById("sectionCollapsible").checked;
-      document.getElementById("sectionSummary").disabled = !enabled;
-      document.getElementById("sectionOpenByDefault").disabled = !enabled;
+      document.getElementById("sectionCollapsibleOptions").hidden = !enabled;
+      if (!enabled) {
+        document.getElementById("sectionOpenByDefault").checked = false;
+      }
     }
 
     /**
@@ -1461,6 +1591,7 @@
       document.getElementById("sectionCollapsible").checked = false;
       document.getElementById("sectionSummary").value = DEFAULT_SUMMARY_TEXT;
       document.getElementById("sectionOpenByDefault").checked = false;
+      document.getElementById("sectionCollapsibleOptions").hidden = true;
       toggleSectionModalOptions();
       document.getElementById("addSectionModal").classList.add("open");
       document.getElementById("sectionTitle").focus();
