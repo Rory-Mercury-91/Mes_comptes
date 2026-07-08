@@ -818,6 +818,17 @@
           </div>
         </div>
 
+        <div class="form-options">
+          <label class="ctrl">
+            <input type="checkbox" id="includeVideoLink" checked>
+            Inclure le lien vidéo dans le HTML généré
+          </label>
+          <label class="ctrl">
+            <input type="checkbox" id="includeFooterHelp" checked>
+            Inclure le texte d'aide du bas dans le HTML généré
+          </label>
+        </div>
+
         <div id="sectionsContainer"></div>
 
         <p class="hint" id="videoHint">
@@ -826,9 +837,10 @@
           réordonner les champs. Le type <strong>Consigne importante</strong> génère un bandeau rouge.
           Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
           Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour un bloc
-          &lt;details&gt;/&lt;summary&gt;.         Couleurs et styles : panneau <strong>Mise en forme</strong>.
-        Utilisez <strong>Exporter / Charger les informations</strong> pour sauvegarder ou reprendre vos saisies.
-      </p>
+          &lt;details&gt;/&lt;summary&gt;. Couleurs et styles : panneau <strong>Mise en forme</strong>.
+          Décochez le lien vidéo ou le texte du bas si vous n'en avez pas besoin.
+          Utilisez <strong>Exporter / Charger les informations</strong> pour sauvegarder ou reprendre vos saisies.
+        </p>
       </div>
 
       <div id="simpleModePanel" hidden>
@@ -998,9 +1010,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v11";
-    const APP_VERSION = "2.8";
-    const APP_BUILD = "20260708g";
+    const STORAGE_KEY = "generateur-info-video-v12";
+    const APP_VERSION = "2.9";
+    const APP_BUILD = "20260708h";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -1376,6 +1388,8 @@
         mode: "video",
         url: "",
         linkText: DEFAULT_LINK_TEXT,
+        includeVideoLink: true,
+        includeFooterHelp: true,
         simpleContent: "",
         spacing: 0.3,
         sections: [
@@ -1425,6 +1439,8 @@
         mode: d.mode === "simple" ? "simple" : "video",
         url: d.url || "",
         linkText: d.linkText || DEFAULT_LINK_TEXT,
+        includeVideoLink: d.includeVideoLink !== false,
+        includeFooterHelp: d.includeFooterHelp !== false,
         simpleContent: d.simpleContent || "",
         spacing: typeof d.spacing === "number" ? d.spacing : 0.3,
         sections: [],
@@ -1661,16 +1677,16 @@
       let linkRendered = false;
 
       doc.sections.forEach((section, idx) => {
-        parts.push(renderSectionHtml(section));
-        // Le lien vidéo s'insère après la première section (comme le modèle d'origine)
-        if (idx === 0) {
+        const sectionHtml = renderSectionHtml(section);
+        if (sectionHtml) parts.push(sectionHtml);
+        if (doc.includeVideoLink && idx === 0) {
           parts.push(linkHtml(url));
           linkRendered = true;
         }
       });
 
-      if (!linkRendered) parts.push(linkHtml(url));
-      parts.push(footerHtml(url));
+      if (doc.includeVideoLink && !linkRendered) parts.push(linkHtml(url));
+      if (doc.includeFooterHelp) parts.push(footerHtml(url));
 
       return parts.join("\n");
     }
@@ -2055,6 +2071,8 @@
       simpleEditorMounted = false;
       document.getElementById("urlInput").value = doc.url;
       document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
+      document.getElementById("includeVideoLink").checked = doc.includeVideoLink !== false;
+      document.getElementById("includeFooterHelp").checked = doc.includeFooterHelp !== false;
       document.getElementById("spacingInput").value = doc.spacing;
       applyModeUI();
       if (doc.mode === "simple") mountSimpleEditor();
@@ -2075,6 +2093,8 @@
         mode: doc.mode,
         url: doc.url,
         linkText: doc.linkText,
+        includeVideoLink: doc.includeVideoLink,
+        includeFooterHelp: doc.includeFooterHelp,
         simpleContent: doc.simpleContent,
         spacing: doc.spacing,
         sections: doc.sections,
@@ -2296,6 +2316,16 @@
     });
     document.getElementById("linkTextInput").addEventListener("input", (e) => {
       doc.linkText = e.target.value || DEFAULT_LINK_TEXT;
+      saveDoc();
+      updateOutput();
+    });
+    document.getElementById("includeVideoLink").addEventListener("change", (e) => {
+      doc.includeVideoLink = e.target.checked;
+      saveDoc();
+      updateOutput();
+    });
+    document.getElementById("includeFooterHelp").addEventListener("change", (e) => {
+      doc.includeFooterHelp = e.target.checked;
       saveDoc();
       updateOutput();
     });
