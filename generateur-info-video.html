@@ -649,9 +649,15 @@
         </div>
       </div>
 
-      <div class="url-block">
-        <label for="urlInput">URL vidéo</label>
-        <input type="url" id="urlInput" placeholder="https://..." />
+      <div class="video-link-block">
+        <div class="url-block">
+          <label for="urlInput">URL vidéo</label>
+          <input type="url" id="urlInput" placeholder="https://..." />
+        </div>
+        <div class="url-block">
+          <label for="linkTextInput">Texte du lien</label>
+          <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
+        </div>
       </div>
 
       <div id="sectionsContainer"></div>
@@ -822,11 +828,12 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "generateur-info-video-v6";
-    const APP_VERSION = "2.3";
+    const STORAGE_KEY = "generateur-info-video-v7";
+    const APP_VERSION = "2.4";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
+    const DEFAULT_LINK_TEXT = "CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !";
 
     // Couleur de fond de simulation de l'aperçu (préférence locale, hors HTML copié)
     let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
@@ -954,6 +961,7 @@
     function defaultDoc() {
       return {
         url: "",
+        linkText: DEFAULT_LINK_TEXT,
         spacing: 0.3,
         sections: [
           makeSection({
@@ -1000,6 +1008,7 @@
     function normalizeDoc(d) {
       const out = {
         url: d.url || "",
+        linkText: d.linkText || DEFAULT_LINK_TEXT,
         spacing: typeof d.spacing === "number" ? d.spacing : 0.3,
         sections: [],
         styles: {},
@@ -1205,7 +1214,8 @@
     }
 
     function linkHtml(url) {
-      return `<div style="${blockMargin()};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !</a></div>`;
+      const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
+      return `<div style="${blockMargin()};"><a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a></div>`;
     }
 
     function footerHtml(url) {
@@ -1494,7 +1504,7 @@
         label: `Titre « ${s.title || "Section"} »`,
         style: s.titleStyle,
       }));
-      targets.push({ id: "link", label: "Lien « CLIQUEZ ICI »", style: doc.styles.link });
+      targets.push({ id: "link", label: "Style du lien vidéo", style: doc.styles.link });
       targets.push({ id: "labels", label: "Libellés des champs", style: doc.styles.labels });
       targets.push({ id: "notice", label: "Consignes importantes", style: doc.styles.notice });
       targets.push({ id: "summary", label: "Lien d'ouverture (summary)", style: doc.styles.summary });
@@ -1699,6 +1709,7 @@
       doc = defaultDoc();
       saveDoc();
       document.getElementById("urlInput").value = doc.url;
+      document.getElementById("linkTextInput").value = doc.linkText;
       document.getElementById("spacingInput").value = doc.spacing;
       renderSections();
       renderStyleControls();
@@ -1759,8 +1770,14 @@
     document.getElementById("appVersion").textContent = "v" + APP_VERSION;
     loadDoc();
     document.getElementById("urlInput").value = doc.url;
+    document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
     document.getElementById("urlInput").addEventListener("input", (e) => {
       doc.url = e.target.value;
+      saveDoc();
+      updateOutput();
+    });
+    document.getElementById("linkTextInput").addEventListener("input", (e) => {
+      doc.linkText = e.target.value || DEFAULT_LINK_TEXT;
       saveDoc();
       updateOutput();
     });
