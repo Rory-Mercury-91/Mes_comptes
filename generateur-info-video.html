@@ -38,6 +38,7 @@
     header h1 {
       margin: 0 0 0.25rem;
       font-size: 1.35rem;
+      cursor: help;
     }
 
     header p {
@@ -738,7 +739,7 @@
 </head>
 <body>
   <header>
-    <h1>Générateur Info Vidéo <span id="appVersion" style="font-size:0.75em;color:var(--muted);font-weight:normal;"></span></h1>
+    <h1 id="appTitle">Générateur Remarques</h1>
     <p id="headerDesc">Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.</p>
   </header>
 
@@ -950,8 +951,8 @@
 
   <script>
     const STORAGE_KEY = "generateur-info-video-v9";
-    const APP_VERSION = "2.7.3";
-    const APP_BUILD = "20260708d";
+    const APP_VERSION = "2.7.4";
+    const APP_BUILD = "20260708e";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
@@ -2160,7 +2161,7 @@
     });
 
     /* --- Initialisation --- */
-    document.getElementById("appVersion").textContent = "v" + APP_VERSION + " (" + APP_BUILD + ")";
+    document.getElementById("appTitle").title = "Version " + APP_VERSION + " (" + APP_BUILD + ")";
     loadDoc();
     document.getElementById("urlInput").value = doc.url;
     document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
