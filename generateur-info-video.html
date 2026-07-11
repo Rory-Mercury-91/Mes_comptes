@@ -693,21 +693,20 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="mode-switch" id="headerModeSwitch">
-        <button type="button" class="mode-btn active" id="btnModeVideo">Consigne vidéo</button>
-        <button type="button" class="mode-btn" id="btnModeSimple">Remarque simple</button>
+      <div class="mode-switch" id="headerModeSwitch" style="height:30px;">
+        <button type="button" class="mode-btn active" id="btnModeVideo" style="height:30px;">Consigne vidéo</button>
+        <button type="button" class="mode-btn" id="btnModeSimple" style="height:30px;">Remarque simple</button>
       </div>
-      <div class="data-toolbar">
-        <div style="display:flex;align-items:center;gap:0.4rem;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.25rem 0.55rem;background:var(--surface);">
+      <div class="data-toolbar" style="align-items:center;">
+        <div style="display:flex;align-items:center;gap:0.4rem;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 0.55rem;background:var(--surface);">
           <label for="siteNameInput" style="font-size:0.78rem;color:var(--muted);white-space:nowrap;font-weight:600;">Site :</label>
-          <input type="text" id="siteNameInput" placeholder="Nom du site" style="background:transparent;border:none;color:var(--text);font-size:0.8rem;width:130px;padding:0;" />
+          <input type="text" id="siteNameInput" placeholder="Nom du site" style="background:transparent;border:none;color:var(--text);font-size:0.8rem;width:130px;padding:0;height:100%;" />
         </div>
-        <button type="button" id="btnReset" title="Tout réinitialiser">↺ Réinitialiser</button>
-        <button type="button" id="btnExport">⬆ Exporter</button>
-        <button type="button" id="btnImport">⬇ Charger</button>
+        <button type="button" id="btnReset" title="Tout réinitialiser" style="height:30px;">↺ Réinitialiser</button>
+        <button type="button" id="btnExport" style="height:30px;">⬆ Exporter</button>
+        <button type="button" id="btnImport" style="height:30px;">⬇ Charger</button>
         <input type="file" id="importFileInput" accept=".json,application/json" hidden />
       </div>
-      <button type="button" class="btn-success" id="btnCopy">⎘ Copier le HTML</button>
     </div>
   </header>
 
@@ -809,10 +808,7 @@
         <div class="pane-header">
           <h2>HTML généré</h2>
           <div style="display:flex;gap:.5rem;align-items:center;">
-            <label class="ctrl" style="font-size:.75rem;">
-              Fond aperçu
-              <input type="color" id="previewBgInput" value="#2b2b2b">
-            </label>
+            <button type="button" class="btn-success" id="btnCopy" style="height:28px;font-size:0.78rem;padding:0 0.7rem;">⎘ Copier le HTML</button>
           </div>
         </div>
         <textarea id="htmlOutput" readonly spellcheck="false"></textarea>
@@ -822,6 +818,10 @@
       <div class="output-pane">
         <div class="pane-header">
           <h2>Aperçu visuel</h2>
+          <label class="ctrl" style="font-size:.75rem;">
+            Fond
+            <input type="color" id="previewBgInput" value="#2b2b2b">
+          </label>
         </div>
         <iframe id="previewFrame" title="Aperçu HTML"></iframe>
       </div>
