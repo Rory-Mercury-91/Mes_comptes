@@ -689,7 +689,6 @@
       <div class="header-logo">✦</div>
       <div>
         <h1 id="appTitle">Générateur Remarques</h1>
-        <p id="headerDesc">Complétez les champs — le HTML se met à jour en temps réel.</p>
       </div>
     </div>
     <div class="header-actions">
@@ -1676,9 +1675,6 @@
       document.getElementById("panelStyles")?.classList.toggle("hidden-panel", isSimple);
       document.getElementById("btnModeVideo").classList.toggle("active", !isSimple);
       document.getElementById("btnModeSimple").classList.toggle("active", isSimple);
-      document.getElementById("headerDesc").textContent = isSimple
-        ? "Rédigez une remarque enrichie — HTML uniquement."
-        : "Complétez les champs — le HTML se met à jour en temps réel.";
     }
 
     function setMode(mode) {
