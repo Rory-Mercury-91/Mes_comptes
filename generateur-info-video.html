@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Générateur Remarques</title>
+  <style>
+    /* ── Variables ── */
+    :root {
+      --bg:            #0d1117;
+      --card:          #161b22;
+      --surface:       #1f2937;
+      --surface-hover: #27323f;
+      --border:        #30363d;
+      --accent:        #58a6ff;
+      --accent-hover:  #388bfd;
+      --accent-dim:    #1d3557;
+      --danger:        #f87171;
+      --danger-dim:    #3b1919;
+      --success:       #34d399;
+      --text:          #e6edf3;
+      --muted:         #8b949e;
+      --radius:        10px;
+      --radius-sm:     6px;
+      --shadow:        0 4px 24px rgba(0,0,0,.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+
+    .header-logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent) 0%, #9c6af7 100%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: help;
+      letter-spacing: -0.01em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── Layout principal 2 colonnes ── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+      gap: 0;
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+
+    /* Colonne gauche : saisie */
+    .col-left {
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    /* Colonne droite : HTML + aperçu */
+    .col-right {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .output-pane {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .output-pane:last-child { border-bottom: none; }
+
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1rem;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .pane-header h2 {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    #htmlOutput {
+      flex: 1;
+      resize: none;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: #0d1117;
+      color: #c9d1d9;
+      outline: none;
+      line-height: 1.5;
+      overflow: auto;
+    }
+
+    #previewFrame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #fff;
+      min-height: 0;
+    }
+
+    /* ── Boutons ── */
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: background .15s, border-color .15s;
+    }
+    button:hover { background: var(--surface-hover); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    .btn-success {
+      background: #166534;
+      color: #d1fae5;
+      border-color: #166534;
+      font-weight: 600;
+    }
+    .btn-success:hover { background: #14532d; }
+
+    .btn-danger { color: var(--danger); border-color: var(--danger-dim); }
+    .btn-danger:hover { background: var(--danger-dim); }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+      padding: 0.35rem 0.5rem;
+    }
+    .btn-ghost:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
+
+    .btn-move {
+      width: 26px; height: 22px;
+      padding: 0;
+      font-size: 0.65rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-move:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── Panneau réductible (card collapsible) ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 0.85rem;
+      background: none;
+      border: none;
+      border-radius: 0;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .panel-toggle:hover { background: var(--surface); }
+
+    .panel-toggle-icon {
+      font-size: 0.65rem;
+      color: var(--muted);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .panel.open .panel-toggle-icon { transform: rotate(90deg); }
+
+    .panel-toggle-title { flex: 1; }
+
+    .panel-toggle-badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.1rem 0.45rem;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .panel-body {
+      display: none;
+      padding: 0.75rem 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+    .panel.open .panel-body { display: block; }
+
+    .panel-body-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+
+    /* ── Inputs ── */
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    select, textarea {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.55rem;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    input::placeholder { color: #4b5563; }
+
+    /* ── Ligne de formulaire ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .form-row label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .form-row input,
+    .form-row select { width: 100%; }
+
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+
+    /* ── Options (checkboxes) ── */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .ctrl {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .ctrl input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+    .ctrl input[type="color"] {
+      width: 30px; height: 24px; padding: 0;
+      border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
+    }
+    .ctrl input[type="color"]:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ctrl input[type="number"] {
+      width: 58px; padding: 0.25rem 0.3rem;
+      font-size: 0.78rem;
+    }
+
+    /* ── Mode switch ── */
+    .mode-switch {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .mode-btn {
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 0.45rem 0.5rem;
+      font-weight: 500;
+    }
+    .mode-btn:hover { background: var(--surface); color: var(--text); }
+    .mode-btn.active { background: var(--accent-dim); color: var(--accent); font-weight: 700; }
+    .mode-btn + .mode-btn { border-left: 1px solid var(--border); }
+
+    /* ── Badge type ── */
+    .type-badge {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .type-badge.inline     { background: #3a2a15; color: #f0a860; }
+    .type-badge.list       { background: #14291a; color: #6ee29e; }
+    .type-badge.notice     { background: #3b1919; color: #f87171; }
+    .type-badge.collapsible{ background: #1e1a35; color: #b39ddb; }
+
+    /* ── Blocs section ── */
+    .section-block {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.65rem;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.65rem;
+      background: var(--surface);
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-head:hover { background: var(--surface-hover); }
+
+    .section-chevron {
+      font-size: 0.6rem;
+      color: var(--muted);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .section-block.open .section-chevron { transform: rotate(90deg); }
+
+    .section-title-input {
+      flex: 1;
+      min-width: 80px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed transparent;
+      border-radius: 0;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.1rem 0.25rem;
+    }
+    .section-title-input:focus {
+      outline: none;
+      border-bottom-color: var(--accent);
+    }
+
+    .section-move-btns { display: flex; flex-direction: column; gap: 0.1rem; flex-shrink: 0; }
+
+    .section-body {
+      display: none;
+      padding: 0.65rem;
+      border-top: 1px solid var(--border);
+    }
+    .section-block.open .section-body { display: block; }
+
+    .section-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+      padding: 0.5rem 0.55rem;
+      margin-bottom: 0.6rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      background: #0d1117;
+    }
+    .section-options input[type="text"] {
+      flex: 1 1 180px;
+      font-size: 0.8rem;
+    }
+    .section-options input[type="text"]:disabled { opacity: 0.35; }
+
+    .fields-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: auto 80px 1fr 1fr auto auto;
+      gap: 0.4rem;
+      align-items: center;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+    }
+    .field-row.notice-row { border-color: #4b2020; background: #1c1010; }
+    .field-row.multiline-row { align-items: start; }
+    .field-row.multiline-row .field-move-btns { padding-top: 0.3rem; }
+
+    .field-move-btns { display: flex; flex-direction: column; gap: 0.1rem; }
+
+    .field-type-select {
+      width: 100%;
+      padding: 0.3rem 0.25rem;
+      font-size: 0.72rem;
+    }
+
+    .field-label-input { font-weight: 600; }
+
+    .field-row textarea.field-value-input {
+      width: 100%;
+      min-height: 62px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .btn-img {
+      font-size: 0.72rem;
+      padding: 0.3rem 0.45rem;
+      white-space: nowrap;
+    }
+
+    .notice-options {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+      padding-top: 0.35rem;
+      border-top: 1px dashed #4b2020;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .notice-options input[type="text"] { flex: 1 1 220px; }
+
+    .section-add-field-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+      border-style: dashed;
+      color: var(--muted);
+    }
+    .section-add-field-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Mise en forme ── */
+    .style-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      margin-bottom: 0.4rem;
+    }
+    .style-row-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .style-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+    }
+
+    /* ── Richtext ── */
+    .richtext-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .richtext-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      padding: 0.45rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .richtext-btn {
+      min-width: 30px; height: 30px;
+      padding: 0 0.45rem;
+      font-weight: 700; font-size: 0.8rem;
+    }
+    .richtext-btn.italic-btn  { font-style: italic; }
+    .richtext-btn.underline-btn { text-decoration: underline; }
+    .richtext-color {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: var(--muted); padding: 0 0.2rem;
+    }
+    .richtext-color input[type="color"] { width: 30px; height: 26px; }
+    .richtext-size-group {
+      display: inline-flex; align-items: center; gap: 0.2rem; padding: 0 0.2rem;
+    }
+    .richtext-size-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    .richtext-size-btn { min-width: 26px; font-size: 0.7rem; font-weight: 600; }
+    .richtext-editor {
+      min-height: 160px;
+      padding: 0.75rem;
+      color: #000; background: #fff;
+      font-family: "Segoe UI", sans-serif; font-size: 0.9rem;
+      outline: none; line-height: 1.5;
+    }
+    .richtext-editor:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+
+    /* ── Modales ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 50;
+      align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.35rem;
+      width: min(440px, 100%);
+      box-shadow: var(--shadow);
+    }
+    .modal.modal-section {
+      width: min(500px, 100%);
+      max-height: min(92vh, 900px);
+      overflow-y: auto;
+    }
+    .modal h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .modal-desc { margin: 0 0 1rem; font-size: 0.8rem; color: var(--muted); }
+    .modal-field { margin-bottom: 0.85rem; }
+    .modal-field > label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .modal-field input, .modal-field select,
+    .modal input:not([type="checkbox"]), .modal select {
+      width: 100%; padding: 0.4rem 0.55rem;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg); color: var(--text);
+    }
+    .modal-panel {
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0.75rem; margin-bottom: 0.9rem; background: var(--surface);
+    }
+    .modal-panel-title {
+      margin: 0 0 0.55rem; font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .modal-check-row {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      cursor: pointer; margin: 0; font-weight: normal; min-width: 0;
+    }
+    .modal-check-row input[type="checkbox"] {
+      width: 15px; height: 15px; margin: 0.1rem 0 0;
+      flex-shrink: 0; accent-color: var(--accent); cursor: pointer;
+    }
+    .modal-check-row-text {
+      display: flex; flex-direction: column; gap: 0.1rem;
+      font-size: 0.83rem; color: var(--text); line-height: 1.35; flex: 1;
+    }
+    .modal-check-row-text small { font-size: 0.76rem; color: var(--muted); font-weight: normal; }
+    .modal-subpanel { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--border); }
+    .modal-subpanel[hidden],
+    .modal-panel[hidden],
+    .modal-field[hidden] { display: none !important; }
+    .modal-value-row { display: flex; gap: 0.5rem; align-items: stretch; }
+    .modal-value-row input { flex: 1; min-width: 0; }
+    .modal-value-row .btn-img { flex-shrink: 0; display: flex; align-items: center; }
+    .modal label:not(.modal-check-row) { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 1.25rem; right: 1.25rem;
+      background: #166534; color: #d1fae5;
+      padding: 0.6rem 1rem; border-radius: var(--radius-sm);
+      font-size: 0.82rem; font-weight: 500;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .22s, transform .22s;
+      pointer-events: none; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Hint / labels secondaires ── */
+    .hint { font-size: 0.76rem; color: var(--muted); margin: 0.4rem 0 0; line-height: 1.45; }
+
+    /* ── Séparateur ── */
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 0.6rem 0; }
+
+    /* ── Toolbar data (export/import) ── */
+    .data-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .app-layout { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 860px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .col-left { border-right: none; border-bottom: 1px solid var(--border); max-height: 70vh; }
+      .col-right { grid-template-rows: 300px 300px; height: auto; }
+      .style-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ En-tête ══ -->
+  <header>
+    <div class="header-left">
+      <div class="header-logo">✦</div>
+      <div>
+        <h1 id="appTitle">Générateur Remarques</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="mode-switch" id="headerModeSwitch" style="height:30px;">
+        <button type="button" class="mode-btn active" id="btnModeVideo" style="height:30px;">Consigne vidéo</button>
+        <button type="button" class="mode-btn" id="btnModeSimple" style="height:30px;">Remarque simple</button>
+      </div>
+      <div class="data-toolbar" style="align-items:center;">
+        <div style="display:flex;align-items:center;gap:0.4rem;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 0.55rem;background:var(--surface);">
+          <label for="siteNameInput" style="font-size:0.78rem;color:var(--muted);white-space:nowrap;font-weight:600;">Site :</label>
+          <input type="text" id="siteNameInput" placeholder="Nom du site" style="background:transparent;border:none;color:var(--text);font-size:0.8rem;width:130px;padding:0;height:100%;" />
+        </div>
+        <button type="button" id="btnReset" title="Tout réinitialiser" style="height:30px;">↺ Réinitialiser</button>
+        <button type="button" id="btnExport" style="height:30px;">⬆ Exporter</button>
+        <button type="button" id="btnImport" style="height:30px;">⬇ Charger</button>
+        <input type="file" id="importFileInput" accept=".json,application/json" hidden />
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ Mise en page 2 colonnes ══ -->
+  <div class="app-layout">
+
+    <!-- ─ Colonne gauche ─ -->
+    <div class="col-left">
+
+      <!-- ── Panneau mode Vidéo ── -->
+      <div id="videoModePanel" style="display:flex;flex-direction:column;gap:1rem;" hidden>
+
+        <!-- Mise en forme (toujours réduit par défaut) -->
+        <div class="panel" id="panelStyles">
+          <button type="button" class="panel-toggle" data-panel="panelStyles">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Mise en forme</span>
+          </button>
+          <div class="panel-body">
+            <div class="panel-body-actions">
+              <button type="button" class="btn-ghost" id="btnResetStyles">↺ Réinitialiser</button>
+            </div>
+            <div id="stylesContainer"></div>
+          </div>
+        </div>
+
+        <!-- Paramètres vidéo / fichier -->
+        <div class="panel open" id="panelParams">
+          <button type="button" class="panel-toggle" data-panel="panelParams">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Paramètres du lien</span>
+          </button>
+          <div class="panel-body">
+            <div class="form-stack">
+              <div class="form-row">
+                <label for="urlInput">URL vidéo</label>
+                <input type="url" id="urlInput" placeholder="https://…" />
+              </div>
+              <div class="form-row">
+                <label for="linkTextInput">Texte lien vidéo</label>
+                <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
+              </div>
+            </div>
+            <hr class="sep">
+            <div style="display:flex; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
+              <label class="ctrl">
+                <input type="checkbox" id="includeVideoLink" checked>
+                Inclure le lien vidéo
+              </label>
+              <label class="ctrl">
+                <input type="checkbox" id="includeFooterHelp" checked>
+                Inclure le texte d'aide
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sections & champs -->
+        <div class="panel open" id="panelSections">
+          <div class="panel-toggle" data-panel="panelSections" style="cursor:pointer;">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Sections &amp; champs</span>
+            <span class="panel-toggle-badge" id="sectionsBadge">2</span>
+            <button type="button" id="btnAddSection" onclick="event.stopPropagation();" style="margin-left:auto;font-size:0.75rem;padding:0.2rem 0.55rem;height:24px;border-radius:5px;background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600;flex-shrink:0;">+ Ajouter une nouvelle section</button>
+          </div>
+          <div class="panel-body">
+            <div id="sectionsContainer"></div>
+          </div>
+        </div>
+
+      </div><!-- /videoModePanel -->
+
+      <!-- ── Panneau mode Simple ── -->
+      <div id="simpleModePanel" hidden>
+        <div class="panel open" id="panelSimple">
+          <button type="button" class="panel-toggle" data-panel="panelSimple">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Texte de la remarque</span>
+          </button>
+          <div class="panel-body">
+            <div class="panel-body-actions">
+              <button type="button" class="btn-ghost" id="btnResetSimple">↺ Effacer</button>
+            </div>
+            <div id="simpleEditorHost"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-left -->
+
+    <!-- ─ Colonne droite ─ -->
+    <div class="col-right">
+
+      <!-- HTML généré (haut) -->
+      <div class="output-pane">
+        <div class="pane-header">
+          <h2>HTML généré</h2>
+          <div style="display:flex;gap:.5rem;align-items:center;">
+            <button type="button" class="btn-success" id="btnCopy" style="height:28px;font-size:0.78rem;padding:0 0.7rem;">⎘ Copier le HTML</button>
+          </div>
+        </div>
+        <textarea id="htmlOutput" readonly spellcheck="false"></textarea>
+      </div>
+
+      <!-- Aperçu visuel (bas) -->
+      <div class="output-pane">
+        <div class="pane-header">
+          <h2>Aperçu visuel</h2>
+          <label class="ctrl" style="font-size:.75rem;">
+            Fond
+            <input type="color" id="previewBgInput" value="#2b2b2b">
+          </label>
+        </div>
+        <iframe id="previewFrame" title="Aperçu HTML"></iframe>
+      </div>
+
+    </div><!-- /col-right -->
+
+  </div><!-- /app-layout -->
+
+  <!-- ══ Toast ══ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══ Modale : ajout de champ (type uniquement) ══ -->
+  <div class="modal-overlay" id="addFieldModal">
+    <div class="modal" style="width:min(380px,100%);">
+      <h3 id="addFieldModalTitle">Ajouter un champ</h3>
+      <p class="modal-desc" id="addFieldModalDesc"></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin:0.5rem 0 1rem;">
+        <button type="button" id="btnAddNormalField" style="
+          padding:1rem 0.5rem;border-radius:8px;
+          border:2px solid var(--border);background:var(--surface);
+          color:var(--text);font-size:0.88rem;font-weight:600;
+          display:flex;flex-direction:column;align-items:center;gap:0.4rem;
+          cursor:pointer;transition:border-color .15s,background .15s;">
+          <span style="font-size:1.4rem;">📝</span>
+          Classique
+          <small style="font-weight:400;color:var(--muted);font-size:0.73rem;">Libellé + valeur</small>
+        </button>
+        <button type="button" id="btnAddNoticeField" style="
+          padding:1rem 0.5rem;border-radius:8px;
+          border:2px solid var(--border);background:var(--surface);
+          color:var(--text);font-size:0.88rem;font-weight:600;
+          display:flex;flex-direction:column;align-items:center;gap:0.4rem;
+          cursor:pointer;transition:border-color .15s,background .15s;">
+          <span style="font-size:1.4rem;">🚨</span>
+          Consigne importante
+          <small style="font-weight:400;color:var(--muted);font-size:0.73rem;">Bandeau rouge</small>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btnFieldCancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Modale : ajout de section ══ -->
+  <div class="modal-overlay" id="addSectionModal">
+    <div class="modal modal-section">
+      <h3>Ajouter une section</h3>
+      <p class="modal-desc">Les sections ajoutées peuvent être rendues réductibles.</p>
+
+      <div class="modal-field">
+        <label for="sectionTitle">Titre</label>
+        <input type="text" id="sectionTitle" placeholder="Titre de la section" />
+      </div>
+
+      <div class="modal-field">
+        <label for="sectionLayout">Type d'affichage</label>
+        <select id="sectionLayout">
+          <option value="inline">Lignes (inline)</option>
+          <option value="list">Liste à puces</option>
+        </select>
+      </div>
+
+      <div class="modal-panel">
+        <p class="modal-panel-title">Options avancées</p>
+        <label class="modal-check-row" for="sectionCollapsible">
+          <input type="checkbox" id="sectionCollapsible">
+          <span class="modal-check-row-text">
+            <strong>Section réductible</strong>
+            <small>Le titre reste visible, le contenu se replie.</small>
+          </span>
+        </label>
+        <div id="sectionCollapsibleOptions" class="modal-subpanel" hidden>
+          <div class="modal-field">
+            <label for="sectionSummary">Texte du lien d'ouverture</label>
+            <input type="text" id="sectionSummary" placeholder="Saisir la valeur" />
+          </div>
+          <label class="modal-check-row" for="sectionOpenByDefault">
+            <input type="checkbox" id="sectionOpenByDefault">
+            <span class="modal-check-row-text">
+              <strong>Ouverte par défaut</strong>
+              <small>Afficher le contenu dès le chargement.</small>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btnSectionCancel">Annuler</button>
+        <button type="button" class="btn-primary" id="btnSectionConfirm">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ JavaScript ══ -->
+  <script>
+    const STORAGE_KEY    = "generateur-info-video-v22";
+    const APP_VERSION    = "3.1";
+    const APP_BUILD      = "20260711b";
+    const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
+    const DEFAULT_ALARM_IMG    = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
+    const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
+    const DEFAULT_LINK_TEXT    = "CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !";
+
+    let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
+
+    const DEFAULT_STYLE_COLORS = {
+      diversTitle:    "#2E7D32",
+      link:           "#D97B1C",
+      connexionTitle: "#2E86C1",
+      labels:         "#000000",
+      notice:         "#C62828",
+      summary:        "#2E86C1",
+      bottomText:     "#000000",
+    };
+
+    const DEFAULT_TITLE_COLORS = {
+      sec_divers:    DEFAULT_STYLE_COLORS.diversTitle,
+      sec_connexion: DEFAULT_STYLE_COLORS.connexionTitle,
+    };
+
+    /** @type {object} Document courant */
+    let doc;
+    let simpleEditorMounted = false;
+
+    /* ── Utilitaires ── */
+
+    function uid() {
+      return "id_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function containsHtml(str) {
+      return /<[a-z][\s\S]*>/i.test(str);
+    }
+
+    function showToast(message) {
+      const t = document.getElementById("toast");
+      t.textContent = message;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2400);
+    }
+
+    /* ── Panneaux réductibles (col gauche) ── */
+
+    document.querySelectorAll(".panel-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const panel = btn.closest(".panel");
+        panel.classList.toggle("open");
+      });
+    });
+
+    /* ── Modèle de données ── */
+
+    /**
+     * Crée une configuration de style.
+     * @param {object} [overrides] Propriétés à surcharger
+     * @returns {object} Style normalisé
+     */
+    function makeStyle(overrides) {
+      return {
+        colorOn: false, colorValue: "#000000",
+        bgOn: false, bgValue: "#ffff00",
+        size: 1.2, bold: true, italic: false, underline: true,
+        ...(overrides || {}),
+      };
+    }
+
+    /**
+     * Crée un champ avec ses propriétés par défaut.
+     * @param {object} [overrides] Propriétés à surcharger
+     * @returns {object} Champ normalisé
+     */
+    function makeField(overrides) {
+      return {
+        id: uid(), label: "", value: "", type: "normal",
+        multiline: false, wrapAlarms: true, alarmImageSrc: DEFAULT_ALARM_IMG,
+        ...(overrides || {}),
+      };
+    }
+
+    /**
+     * Crée une section avec ses propriétés par défaut.
+     * @param {object} [overrides] Propriétés à surcharger
+     * @returns {object} Section normalisée
+     */
+    function makeSection(overrides) {
+      return {
+        id: uid(), title: "Section", layout: "inline",
+        isDefault: false, collapsible: false,
+        summaryText: DEFAULT_SUMMARY_TEXT, openByDefault: false,
+        titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
+        fields: [],
+        ...(overrides || {}),
+      };
+    }
+
+    /**
+     * Construit le document par défaut.
+     * @returns {object} Document initial
+     */
+    function defaultDoc() {
+      return {
+        mode: "video", siteName: "", url: "",
+        linkText: DEFAULT_LINK_TEXT,
+        includeVideoLink: true, includeFooterHelp: true,
+        simpleContent: "", spacing: 0,
+        sections: [
+          makeSection({
+            id: "sec_divers", title: "Informations diverses",
+            layout: "inline", isDefault: true,
+            titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.diversTitle, size: 1.2 }),
+            fields: [
+              makeField({ label: "Code Inter", value: "" }),
+              makeField({ label: "Consigne importante", value: "", type: "notice", wrapAlarms: true }),
+              makeField({ label: "Info.", value: "", multiline: true }),
+            ],
+          }),
+          makeSection({
+            id: "sec_connexion", title: "Information de connexion vidéo",
+            layout: "list", isDefault: true,
+            titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
+            fields: [
+              makeField({ label: "Adresse IP", value: "" }),
+              makeField({ label: "Port", value: "" }),
+              makeField({ label: "Identifiant", value: "" }),
+              makeField({ label: "Mot de passe", value: "" }),
+              makeField({ label: "Autre information", value: "" }),
+            ],
+          }),
+        ],
+        styles: {
+          link:       makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true }),
+          labels:     makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
+          notice:     makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
+          summary:    makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false }),
+          bottomText: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 }),
+        },
+      };
+    }
+
+    /**
+     * Normalise un document chargé.
+     * @param {object} d Document brut
+     * @returns {object} Document normalisé
+     */
+    function normalizeDoc(d) {
+      const out = {
+        mode: d.mode === "simple" ? "simple" : "video",
+        siteName: d.siteName || "", url: d.url || "",
+        linkText: d.linkText || DEFAULT_LINK_TEXT,
+        includeVideoLink: d.includeVideoLink !== false,
+        includeFooterHelp: d.includeFooterHelp !== false,
+        simpleContent: d.simpleContent || "", spacing: 0,
+        sections: [], styles: {},
+      };
+
+      const rawSections = (d.sections || []).filter((s) => s.layout !== "richtext");
+      const legacyRich = (d.sections || []).find((s) => s.layout === "richtext");
+      if (!out.simpleContent && legacyRich?.content) out.simpleContent = legacyRich.content;
+
+      out.sections = rawSections.map((s) => {
+        let fields = [...(s.fields || [])];
+        if (fields.some((f) => typeof f.position === "number")) {
+          fields.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+        }
+        return {
+          id: s.id || uid(), title: s.title || "Section",
+          layout: s.layout === "list" ? "list" : "inline",
+          isDefault: !!s.isDefault,
+          collapsible: s.isDefault ? false : !!s.collapsible,
+          summaryText: s.summaryText || DEFAULT_SUMMARY_TEXT,
+          openByDefault: s.isDefault ? false : !!s.openByDefault,
+          titleStyle: makeStyle(s.titleStyle || {}),
+          fields: fields.map((f) => ({
+            id: f.id || uid(), label: f.label || "", value: f.value || "",
+            type: f.type === "notice" ? "notice" : "normal",
+            multiline: !!(f.multiline || (/^info\.?$/i.test(f.label || "") && f.type !== "notice")),
+            wrapAlarms: f.wrapAlarms !== false,
+            alarmImageSrc: f.alarmImageSrc || DEFAULT_ALARM_IMG,
+          })),
+        };
+      });
+
+      const st = d.styles || {};
+      out.styles = {
+        link:       makeStyle(st.link       || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2 }),
+        labels:     makeStyle(st.labels     || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
+        notice:     makeStyle(st.notice     || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
+        summary:    makeStyle(st.summary    || { size: 1, bold: false, underline: false }),
+        bottomText: makeStyle(st.bottomText || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 }),
+      };
+
+      // Migration : ajoute la consigne si absente dans la section d'origine
+      const divers = out.sections.find((s) => s.id === "sec_divers");
+      if (divers && !divers.fields.some((f) => f.type === "notice")) {
+        const codeIdx = divers.fields.findIndex((f) => /code inter/i.test(f.label));
+        const nf = makeField({ label: "Consigne importante", value: "", type: "notice", wrapAlarms: true });
+        codeIdx !== -1 ? divers.fields.splice(codeIdx + 1, 0, nf) : divers.fields.unshift(nf);
+      }
+
+      return out;
+    }
+
+    function loadDoc() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (_) { /* noop */ }
+      doc = saved && saved.sections ? normalizeDoc(saved) : defaultDoc();
+    }
+
+    function saveDoc() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(doc));
+    }
+
+    /* ── Génération HTML ── */
+
+    function inlineStyle(s) {
+      const css = [];
+      if (s.colorOn) css.push(`color: ${s.colorValue}`);
+      if (s.bgOn)    css.push(`background-color: ${s.bgValue}`);
+      css.push(`font-size: ${s.size}em`);
+      css.push(`font-weight: ${s.bold ? "bold" : "normal"}`);
+      if (s.italic)   css.push("font-style: italic");
+      css.push(`text-decoration: ${s.underline ? "underline" : "none"}`);
+      return css.join("; ");
+    }
+
+    function styledSpan(text, s) {
+      return `<span style="${inlineStyle(s)}">${text}</span>`;
+    }
+
+    const isTight = () => doc.spacing <= 0;
+
+    function auxStyle() {
+      return "margin: 0; padding: 0" + (isTight() ? "; line-height: 1.15" : "");
+    }
+
+    function collapseBreaks(text) {
+      return String(text)
+        .replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+        .replace(/\n[ \t]*\n+/g, "\n")
+        .replace(/(?:<br\s*\/?>\s*){2,}/gi, "<br>")
+        .replace(/^\n+|\n+$/g, "");
+    }
+
+    function renderFieldValue(field) {
+      if (containsHtml(field.value)) return collapseBreaks(field.value);
+      const text = escapeHtml(collapseBreaks(field.value));
+      return field.multiline ? text.split("\n").join("<br>") : text;
+    }
+
+    function renderNoticeHtml(field) {
+      const img = `<img src="${escapeHtml(field.alarmImageSrc || DEFAULT_ALARM_IMG)}" width="24" height="24">`;
+      let inner;
+      if (containsHtml(field.value))    inner = field.value;
+      else if (field.wrapAlarms)         inner = `${img} ${escapeHtml(field.value)} ${img}`;
+      else                               inner = escapeHtml(field.value);
+      return `<strong style="${inlineStyle(doc.styles.notice)}"> ${inner} </strong>`;
+    }
+
+    function renderFieldHtml(field) {
+      if (field.type === "notice") return renderNoticeHtml(field);
+      return `${styledSpan(escapeHtml(field.label) + " :", doc.styles.labels)} ${renderFieldValue(field)}`;
+    }
+
+    function renderSectionBodyHtml(section, items) {
+      if (section.layout === "list") {
+        if (isTight()) return items.map((f) => `• ${renderFieldHtml(f)}`).join("<br>\n");
+        const lis = items.map((f) => `    <li style="margin: 0 0 ${doc.spacing}em 0; padding: 0; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`);
+        return `<ul style="color: #000000; margin: 0; padding: 0; list-style: disc inside;">\n${lis.join("\n")}\n</ul>`;
+      }
+      if (isTight()) return items.map((f) => renderFieldHtml(f)).join("<br>\n");
+      const divs = items.map((f, i) => `    <div style="margin: 0 0 ${i === items.length - 1 ? 0 : doc.spacing}em 0; padding: 0;">${renderFieldHtml(f)}</div>`);
+      return `<div style="color: #000000; margin: 0; padding: 0;">\n${divs.join("\n")}\n</div>`;
+    }
+
+    function renderSectionTitleHtml(section) {
+      return styledSpan(escapeHtml(section.title) + " :", section.titleStyle);
+    }
+
+    function sectionOuterStyle(afterFooter) {
+      const base = "margin: 0; padding: 0; color: #000000";
+      if (isTight()) return base + "; line-height: 1.15";
+      const top = afterFooter ? `; margin-top: ${doc.spacing}em` : "";
+      return base + top + `; margin-bottom: ${doc.spacing}em`;
+    }
+
+    function renderSectionHtml(section, opts = {}) {
+      const outer = sectionOuterStyle(!!opts.afterFooter);
+      const items = section.fields.filter((f) => f.value.trim() !== "");
+      const hasBody = items.length > 0;
+      const prepend = opts.prependLinkHtml ? `${opts.prependLinkHtml}<br>\n` : "";
+      const append  = `${opts.appendFooterHtml || ""}${opts.appendExtraHtml || ""}`;
+
+      if (!section.collapsible) {
+        if (isTight()) {
+          const titlePart = renderSectionTitleHtml(section);
+          if (!hasBody && !prepend && !append) return `<div style="${outer};">${titlePart}</div>`;
+          let inner = prepend;
+          inner += hasBody ? `${titlePart}<br>\n${renderSectionBodyHtml(section, items)}` : titlePart;
+          inner += append;
+          return `<div style="${outer};">${inner}\n</div>`;
+        }
+        const titleHtml = `<div style="margin: 0; padding: 0;">${renderSectionTitleHtml(section)}</div>`;
+        if (!hasBody) return `<div style="${outer};">${titleHtml}</div>`;
+        return `<div style="${outer};">${titleHtml}\n${renderSectionBodyHtml(section, items)}</div>`;
+      }
+
+      const titlePart = isTight()
+        ? renderSectionTitleHtml(section)
+        : `<div style="margin: 0; padding: 0;">${renderSectionTitleHtml(section)}</div>`;
+      if (!hasBody) return `<div style="${outer};">${titlePart}</div>`;
+
+      const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer; margin: 0; padding: 0`;
+      const openAttr = section.openByDefault ? " open" : "";
+      const detailsBlock = `<details${openAttr} style="margin: 0; padding: 0;">\n    <summary style="${summaryStyle}">${escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT)}</summary>\n${renderSectionBodyHtml(section, items)}\n</details>`;
+      return `<div style="${outer};">${titlePart}${isTight() ? "" : "\n"}${detailsBlock}</div>`;
+    }
+
+    function linkHtmlFragment(url) {
+      return `<a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${escapeHtml(doc.linkText || DEFAULT_LINK_TEXT)}</a>`;
+    }
+
+    function footerHtmlFragment(url) {
+      const helpText = styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText);
+      return `<br>\n${helpText}<br>\n${escapeHtml(url)}`;
+    }
+
+    function getConnexionIdx() { const i = doc.sections.findIndex((s) => s.id === "sec_connexion"); return i >= 0 ? i : doc.sections.findIndex((s) => s.isDefault && s.layout === "list"); }
+    function getFooterIdx()    { const i = doc.sections.findIndex((s) => s.id === "sec_connexion"); if (i >= 0) return i; let last = -1; doc.sections.forEach((s, idx) => { if (s.isDefault) last = idx; }); return last; }
+
+    function buildHtml() {
+      if (doc.mode === "simple") return (doc.simpleContent || "").trim();
+
+      const url = doc.url;
+      const parts = [];
+      let linkRendered = false, footerRendered = false;
+      const connexionIdx = getConnexionIdx();
+      const footerIdx    = getFooterIdx();
+      const groupBlock   = isTight() && connexionIdx >= 0;
+
+      doc.sections.forEach((section, idx) => {
+        const isConnexion = idx === connexionIdx;
+        const opts = { afterFooter: footerRendered };
+
+        if (groupBlock && isConnexion) {
+          if (doc.includeVideoLink) { opts.prependLinkHtml = linkHtmlFragment(url); linkRendered = true; }
+          if (doc.includeFooterHelp && idx === footerIdx) { opts.appendFooterHtml = footerHtmlFragment(url); footerRendered = true; }
+        } else if (doc.includeVideoLink && isConnexion) {
+          parts.push(`<div style="${auxStyle()};">${linkHtmlFragment(url)}</div>`);
+          linkRendered = true;
+        }
+
+        const html = renderSectionHtml(section, opts);
+        if (html) parts.push(html);
+
+        if (doc.includeFooterHelp && !footerRendered && idx === footerIdx) {
+          const s = auxStyle();
+          parts.push(isTight()
+            ? `<div style="${s};">${footerHtmlFragment(url).replace(/^<br>\n/, "")}</div>`
+            : `<div style="${s};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`
+          );
+          footerRendered = true;
+        }
+      });
+
+      if (doc.includeVideoLink && !linkRendered)  parts.push(`<div style="${auxStyle()};">${linkHtmlFragment(url)}</div>`);
+      if (doc.includeFooterHelp && !footerRendered) {
+        const s = auxStyle();
+        parts.push(isTight()
+          ? `<div style="${s};">${footerHtmlFragment(url).replace(/^<br>\n/, "")}</div>`
+          : `<div style="${s};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`
+        );
+      }
+
+      return parts.join("\n");
+    }
+
+    function updateOutput() {
+      const html = buildHtml();
+      document.getElementById("htmlOutput").value = html;
+      const frame = document.getElementById("previewFrame");
+      const pd = frame.contentDocument || frame.contentWindow.document;
+      pd.open();
+      pd.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Segoe UI,sans-serif;padding:14px;margin:0;background:${previewBg};">${html}</body></html>`);
+      pd.close();
+    }
+
+    /* ── Rendu des sections (col gauche) ── */
+
+    function layoutLabel(layout) { return layout === "list" ? "Liste" : "Inline"; }
+
+    function moveField(section, index, dir) {
+      const ni = index + dir;
+      if (ni < 0 || ni >= section.fields.length) return;
+      const [item] = section.fields.splice(index, 1);
+      section.fields.splice(ni, 0, item);
+      saveDoc(); renderSections(); updateOutput();
+    }
+
+    function moveSection(index, dir) {
+      const ni = index + dir;
+      if (ni < 0 || ni >= doc.sections.length) return;
+      const [item] = doc.sections.splice(index, 1);
+      doc.sections.splice(ni, 0, item);
+      saveDoc(); renderSections(); renderStyleControls(); updateOutput();
+    }
+
+    function insertImageTag(input, src) {
+      const tag = `<img src="${src || DEFAULT_ALARM_IMG}" width="24" height="24">`;
+      const s = input.selectionStart ?? input.value.length;
+      const e = input.selectionEnd ?? input.value.length;
+      input.value = input.value.slice(0, s) + tag + input.value.slice(e);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.focus();
+      input.setSelectionRange(s + tag.length, s + tag.length);
+    }
+
+    function renderSections() {
+      const container = document.getElementById("sectionsContainer");
+      container.innerHTML = "";
+
+      doc.sections.forEach((section, sIdx) => {
+        const block = document.createElement("div");
+        block.className = "section-block open";
+
+        /* ─ En-tête de section ─ */
+        const head = document.createElement("div");
+        head.className = "section-head";
+
+        const chevron = document.createElement("span");
+        chevron.className = "section-chevron";
+        chevron.textContent = "▶";
+
+        const moveBtns = document.createElement("div");
+        moveBtns.className = "section-move-btns";
+        const upBtn = document.createElement("button");
+        upBtn.type = "button"; upBtn.className = "btn-move"; upBtn.textContent = "▲";
+        upBtn.title = "Monter la section"; upBtn.disabled = sIdx === 0;
+        upBtn.addEventListener("click", (e) => { e.stopPropagation(); moveSection(sIdx, -1); });
+        const downBtn = document.createElement("button");
+        downBtn.type = "button"; downBtn.className = "btn-move"; downBtn.textContent = "▼";
+        downBtn.title = "Descendre la section"; downBtn.disabled = sIdx === doc.sections.length - 1;
+        downBtn.addEventListener("click", (e) => { e.stopPropagation(); moveSection(sIdx, 1); });
+        moveBtns.appendChild(upBtn); moveBtns.appendChild(downBtn);
+
+        const titleInput = document.createElement("input");
+        titleInput.type = "text"; titleInput.className = "section-title-input";
+        titleInput.value = section.title; titleInput.placeholder = "Titre de la section";
+        titleInput.addEventListener("click", (e) => e.stopPropagation());
+        titleInput.addEventListener("input", () => {
+          section.title = titleInput.value; saveDoc(); updateOutput(); renderStyleControls();
+        });
+
+        const badge = document.createElement("span");
+        badge.className = "type-badge " + section.layout;
+        badge.textContent = layoutLabel(section.layout);
+
+        if (section.collapsible) {
+          const collBadge = document.createElement("span");
+          collBadge.className = "type-badge collapsible"; collBadge.textContent = "Réductible";
+          head.appendChild(collBadge);
+        }
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button"; delBtn.className = "btn-danger";
+        delBtn.textContent = "✕"; delBtn.title = "Supprimer cette section";
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!confirm(`Supprimer « ${section.title} » et tous ses champs ?`)) return;
+          doc.sections.splice(sIdx, 1);
+          saveDoc(); renderSections(); renderStyleControls(); updateOutput();
+        });
+
+        head.appendChild(chevron);
+        head.appendChild(moveBtns);
+        head.appendChild(titleInput);
+        head.appendChild(badge);
+        if (section.collapsible) { const b2 = document.createElement("span"); b2.className = "type-badge collapsible"; b2.textContent = "Réductible"; }
+        head.appendChild(delBtn);
+
+        head.addEventListener("click", () => block.classList.toggle("open"));
+        block.appendChild(head);
+
+        /* ─ Corps de section ─ */
+        const body = document.createElement("div");
+        body.className = "section-body";
+
+        if (!section.isDefault) {
+          const opts = document.createElement("div");
+          opts.className = "section-options";
+
+          const collLabel = document.createElement("label");
+          collLabel.className = "ctrl";
+          const collCheck = document.createElement("input");
+          collCheck.type = "checkbox"; collCheck.checked = !!section.collapsible;
+          collCheck.addEventListener("change", () => {
+            section.collapsible = collCheck.checked; saveDoc(); renderSections(); updateOutput();
+          });
+          collLabel.appendChild(collCheck);
+          collLabel.appendChild(document.createTextNode(" Réductible"));
+
+          const summInput = document.createElement("input");
+          summInput.type = "text"; summInput.placeholder = DEFAULT_SUMMARY_TEXT;
+          summInput.value = section.summaryText || DEFAULT_SUMMARY_TEXT;
+          summInput.disabled = !section.collapsible;
+          summInput.title = "Texte du lien d'ouverture";
+          summInput.addEventListener("input", () => { section.summaryText = summInput.value || DEFAULT_SUMMARY_TEXT; saveDoc(); updateOutput(); });
+
+          const openLabel = document.createElement("label");
+          openLabel.className = "ctrl";
+          const openCheck = document.createElement("input");
+          openCheck.type = "checkbox"; openCheck.checked = !!section.openByDefault; openCheck.disabled = !section.collapsible;
+          openCheck.addEventListener("change", () => { section.openByDefault = openCheck.checked; saveDoc(); updateOutput(); });
+          openLabel.appendChild(openCheck);
+          openLabel.appendChild(document.createTextNode(" Ouverte par défaut"));
+
+          opts.appendChild(collLabel); opts.appendChild(summInput); opts.appendChild(openLabel);
+          body.appendChild(opts);
+        }
+
+        const grid = document.createElement("div");
+        grid.className = "fields-grid";
+
+        section.fields.forEach((field, fIdx) => {
+          const row = document.createElement("div");
+          row.className = "field-row" + (field.type === "notice" ? " notice-row" : "") + (field.multiline ? " multiline-row" : "");
+
+          const fMoveBtns = document.createElement("div");
+          fMoveBtns.className = "field-move-btns";
+          const fu = document.createElement("button"); fu.type="button"; fu.className="btn-move"; fu.textContent="▲"; fu.title="Monter"; fu.disabled = fIdx === 0;
+          fu.addEventListener("click", () => moveField(section, fIdx, -1));
+          const fd = document.createElement("button"); fd.type="button"; fd.className="btn-move"; fd.textContent="▼"; fd.title="Descendre"; fd.disabled = fIdx === section.fields.length - 1;
+          fd.addEventListener("click", () => moveField(section, fIdx, 1));
+          fMoveBtns.appendChild(fu); fMoveBtns.appendChild(fd);
+
+          const typeSelect = document.createElement("select");
+          typeSelect.className = "field-type-select"; typeSelect.title = "Type";
+          typeSelect.innerHTML = `<option value="normal">Classique</option><option value="notice">Consigne</option>`;
+          typeSelect.value = field.type === "notice" ? "notice" : "normal";
+          typeSelect.addEventListener("change", () => { field.type = typeSelect.value === "notice" ? "notice" : "normal"; saveDoc(); renderSections(); });
+
+          const labelInput = document.createElement("input");
+          labelInput.type = "text"; labelInput.className = "field-label-input";
+          labelInput.value = field.label; labelInput.placeholder = "Libellé"; labelInput.disabled = field.type === "notice";
+          labelInput.addEventListener("input", () => { field.label = labelInput.value; saveDoc(); updateOutput(); });
+
+          const valInput = field.multiline ? document.createElement("textarea") : document.createElement("input");
+          if (!field.multiline) valInput.type = "text"; else valInput.className = "field-value-input";
+          valInput.value = field.value; valInput.placeholder = "Saisir la valeur";
+          valInput.title = field.multiline ? "Entrée = retour à la ligne" : "HTML autorisé via + Image";
+          valInput.addEventListener("input", () => { field.value = valInput.value; saveDoc(); updateOutput(); });
+
+          const imgBtn = document.createElement("button"); imgBtn.type="button"; imgBtn.className="btn-img"; imgBtn.textContent="+ Image"; imgBtn.title="Insérer code alarme";
+          imgBtn.addEventListener("click", () => insertImageTag(valInput, field.alarmImageSrc));
+
+          const fDel = document.createElement("button"); fDel.type="button"; fDel.className="btn-danger btn-ghost"; fDel.textContent="✕"; fDel.title="Supprimer";
+          fDel.addEventListener("click", () => { section.fields.splice(fIdx, 1); saveDoc(); renderSections(); updateOutput(); });
+
+          row.appendChild(fMoveBtns); row.appendChild(typeSelect); row.appendChild(labelInput);
+          row.appendChild(valInput); row.appendChild(imgBtn); row.appendChild(fDel);
+
+          if (field.type === "notice") {
+            const nopts = document.createElement("div"); nopts.className = "notice-options";
+            const wL = document.createElement("label"); wL.className = "ctrl";
+            const wC = document.createElement("input"); wC.type="checkbox"; wC.checked = field.wrapAlarms !== false;
+            wC.addEventListener("change", () => { field.wrapAlarms = wC.checked; saveDoc(); updateOutput(); });
+            wL.appendChild(wC); wL.appendChild(document.createTextNode(" Icônes auto"));
+            const sL = document.createElement("label"); sL.textContent = "Image PNG :"; sL.style.marginLeft = "0.5rem";
+            const sI = document.createElement("input"); sI.type="text"; sI.value = field.alarmImageSrc || DEFAULT_ALARM_IMG; sI.placeholder="Chemin image";
+            sI.style.flex="1"; sI.style.minWidth="0";
+            sI.addEventListener("input", () => { field.alarmImageSrc = sI.value || DEFAULT_ALARM_IMG; saveDoc(); updateOutput(); });
+            nopts.appendChild(wL); nopts.appendChild(sL); nopts.appendChild(sI);
+            row.appendChild(nopts);
+          }
+
+          grid.appendChild(row);
+        });
+
+        const addFieldBtn = document.createElement("button");
+        addFieldBtn.type = "button"; addFieldBtn.className = "section-add-field-btn";
+        addFieldBtn.textContent = "+ Ajouter un champ à cette section";
+        addFieldBtn.addEventListener("click", () => openAddField(section.id));
+
+        body.appendChild(grid);
+        body.appendChild(addFieldBtn);
+        block.appendChild(body);
+        container.appendChild(block);
+      });
+
+      // Badge nombre de sections
+      document.getElementById("sectionsBadge").textContent = doc.sections.length;
+      updateOutput();
+    }
+
+    /* ── Styles (mise en forme) ── */
+
+    function getStyleTargets() {
+      const targets = doc.sections.map((s) => ({
+        id: "section:" + s.id,
+        label: `Titre « ${s.title || "Section"} »`,
+        style: s.titleStyle,
+      }));
+      targets.push({ id: "link",       label: "Lien vidéo",            style: doc.styles.link });
+      targets.push({ id: "labels",     label: "Libellés des champs",    style: doc.styles.labels });
+      targets.push({ id: "notice",     label: "Consignes importantes",  style: doc.styles.notice });
+      targets.push({ id: "summary",    label: "Lien summary (details)", style: doc.styles.summary });
+      targets.push({ id: "bottomText", label: "Texte d'aide du bas",    style: doc.styles.bottomText });
+      return targets;
+    }
+
+    function findStyleById(id) {
+      if (id === "link")       return doc.styles.link;
+      if (id === "labels")     return doc.styles.labels;
+      if (id === "notice")     return doc.styles.notice;
+      if (id === "summary")    return doc.styles.summary;
+      if (id === "bottomText") return doc.styles.bottomText;
+      return (getStyleTargets().find((t) => t.id === id) || {}).style || null;
+    }
+
+    function renderStyleControls() {
+      document.getElementById("stylesContainer").innerHTML = getStyleTargets().map((t) => {
+        const s = t.style;
+        return `
+        <div class="style-row">
+          <span class="style-row-label">${escapeHtml(t.label)}</span>
+          <div class="style-controls">
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="colorOn" ${s.colorOn ? "checked" : ""}> Couleur
+              <input type="color" data-target="${t.id}" data-prop="colorValue" value="${s.colorValue}" ${s.colorOn ? "" : "disabled"}></label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="bgOn" ${s.bgOn ? "checked" : ""}> Fond
+              <input type="color" data-target="${t.id}" data-prop="bgValue" value="${s.bgValue}" ${s.bgOn ? "" : "disabled"}></label>
+            <label class="ctrl">Taille <input type="number" data-target="${t.id}" data-prop="size" value="${s.size}" min="0.5" max="4" step="0.1"> em</label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="bold"      ${s.bold      ? "checked" : ""}> Gras</label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="italic"    ${s.italic    ? "checked" : ""}> Italique</label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="underline" ${s.underline ? "checked" : ""}> Souligné</label>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function handleStyleChange(e) {
+      if (!e.target.dataset.target || !e.target.dataset.prop) return;
+      const s = findStyleById(e.target.dataset.target);
+      if (!s) return;
+      if (e.target.type === "checkbox") s[e.target.dataset.prop] = e.target.checked;
+      else if (e.target.dataset.prop === "size") s[e.target.dataset.prop] = parseFloat(e.target.value) || 1;
+      else s[e.target.dataset.prop] = e.target.value;
+      if (e.target.dataset.prop === "colorOn" || e.target.dataset.prop === "bgOn") renderStyleControls();
+      saveDoc(); updateOutput();
+    }
+
+    function resetStyles() {
+      if (!confirm("Réinitialiser toute la mise en forme ?")) return;
+      doc.sections.forEach((s) => {
+        s.titleStyle = makeStyle({ colorOn: true, colorValue: DEFAULT_TITLE_COLORS[s.id] || DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 });
+      });
+      doc.styles.link       = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true });
+      doc.styles.labels     = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 });
+      doc.styles.notice     = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false });
+      doc.styles.summary    = makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false });
+      doc.styles.bottomText = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 });
+      saveDoc(); renderStyleControls(); updateOutput();
+    }
+
+    /* ── Mode simple (éditeur richtext) ── */
+
+    function buildRichTextToolbar(editor, onChange) {
+      const toolbar = document.createElement("div");
+      toolbar.className = "richtext-toolbar";
+      let savedRange = null;
+
+      const save = () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+      };
+      const restore = () => {
+        if (!savedRange) return false;
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); return true;
+      };
+      editor.addEventListener("keyup", save); editor.addEventListener("mouseup", save);
+
+      const run = (cmd, val) => { editor.focus(); restore(); document.execCommand(cmd, false, val ?? null); onChange(); };
+      const addBtn = (label, cmd, cls, title) => {
+        const btn = document.createElement("button"); btn.type="button"; btn.className="richtext-btn"+(cls?" "+cls:""); btn.textContent=label; btn.title=title;
+        btn.addEventListener("mousedown", (e) => { e.preventDefault(); save(); });
+        btn.addEventListener("click", () => run(cmd));
+        toolbar.appendChild(btn);
+      };
+      addBtn("G","bold","","Gras"); addBtn("I","italic","italic-btn","Italique"); addBtn("S","underline","underline-btn","Souligné");
+      addBtn("•","insertUnorderedList","","Liste à puces"); addBtn("1.","insertOrderedList","","Liste numérotée");
+
+      const applyFontSize = (em) => {
+        editor.focus(); restore();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+        const range = sel.getRangeAt(0);
+        const span = document.createElement("span"); span.style.fontSize = em;
+        try { range.surroundContents(span); } catch (_) { const f = range.extractContents(); span.appendChild(f); range.insertNode(span); }
+        sel.removeAllRanges(); onChange();
+      };
+
+      const sizeWrap = document.createElement("span"); sizeWrap.className = "richtext-size-group";
+      const sL = document.createElement("span"); sL.className="richtext-size-label"; sL.textContent="Taille";
+      sizeWrap.appendChild(sL);
+      [{ value:"0.85em",label:"P"},{value:"1em",label:"N"},{value:"1.2em",label:"G"},{value:"1.5em",label:"TG"},{value:"2em",label:"XG"}].forEach((o) => {
+        const btn = document.createElement("button"); btn.type="button"; btn.className="richtext-btn richtext-size-btn"; btn.textContent=o.label; btn.title=o.value;
+        btn.addEventListener("mousedown",(e)=>{e.preventDefault();save();}); btn.addEventListener("click",()=>applyFontSize(o.value));
+        sizeWrap.appendChild(btn);
+      });
+      toolbar.appendChild(sizeWrap);
+
+      const mkColor = (label, cmd, def) => {
+        const wrap = document.createElement("label"); wrap.className="richtext-color"; wrap.title=label;
+        wrap.appendChild(document.createTextNode(label));
+        const inp = document.createElement("input"); inp.type="color"; inp.value=def;
+        inp.addEventListener("mousedown",(e)=>{e.preventDefault();save();}); inp.addEventListener("input",(e)=>run(cmd,e.target.value));
+        wrap.appendChild(inp); toolbar.appendChild(wrap);
+      };
+      mkColor("Couleur","foreColor","#000000"); mkColor("Fond","backColor","#ffff00");
+
+      const clearBtn = document.createElement("button"); clearBtn.type="button"; clearBtn.className="richtext-btn"; clearBtn.textContent="Effacer style"; clearBtn.title="Retirer la mise en forme";
+      clearBtn.addEventListener("mousedown",(e)=>{e.preventDefault();save();}); clearBtn.addEventListener("click",()=>run("removeFormat"));
+      toolbar.appendChild(clearBtn);
+      return toolbar;
+    }
+
+    function buildRichTextEditor(getContent, setContent) {
+      const wrap = document.createElement("div"); wrap.className = "richtext-wrap";
+      const editor = document.createElement("div"); editor.className="richtext-editor"; editor.contentEditable="true"; editor.innerHTML = getContent() || "";
+      const sync = () => { setContent(editor.innerHTML); saveDoc(); updateOutput(); };
+      editor.addEventListener("input", sync); editor.addEventListener("blur", sync);
+      wrap.appendChild(buildRichTextToolbar(editor, sync)); wrap.appendChild(editor);
+      return wrap;
+    }
+
+    function mountSimpleEditor() {
+      const host = document.getElementById("simpleEditorHost");
+      host.innerHTML = "";
+      host.appendChild(buildRichTextEditor(() => doc.simpleContent, (html) => { doc.simpleContent = html; }));
+      simpleEditorMounted = true;
+    }
+
+    function applyModeUI() {
+      const isSimple = doc.mode === "simple";
+      const videoPanel = document.getElementById("videoModePanel");
+      videoPanel.style.display = isSimple ? "none" : "flex";
+      document.getElementById("simpleModePanel").hidden = !isSimple;
+      document.getElementById("btnModeVideo").classList.toggle("active", !isSimple);
+      document.getElementById("btnModeSimple").classList.toggle("active", isSimple);
+    }
+
+    function setMode(mode) {
+      doc.mode = mode === "simple" ? "simple" : "video";
+      if (doc.mode === "simple" && !simpleEditorMounted) mountSimpleEditor();
+      saveDoc(); applyModeUI(); updateOutput();
+    }
+
+    /* ── Rafraîchissement UI ── */
+
+    function refreshUIFromDoc() {
+      simpleEditorMounted = false;
+      document.getElementById("siteNameInput").value      = doc.siteName || "";
+      document.getElementById("urlInput").value            = doc.url;
+      document.getElementById("linkTextInput").value       = doc.linkText || DEFAULT_LINK_TEXT;
+      document.getElementById("includeVideoLink").checked  = doc.includeVideoLink !== false;
+      document.getElementById("includeFooterHelp").checked = doc.includeFooterHelp !== false;
+      applyModeUI();
+      if (doc.mode === "simple") mountSimpleEditor();
+      renderSections(); renderStyleControls(); updateOutput();
+    }
+
+    /* ── Export / Import ── */
+
+    function sanitizeExportFileName(name) {
+      return String(name).trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-")
+        .replace(/^-|-$/g, "").slice(0, 80);
+    }
+
+    function buildExportFileName() {
+      const site = sanitizeExportFileName(doc.siteName);
+      const date = new Date().toISOString().slice(0, 10);
+      return site ? `${site}-remarques-${date}.json` : `generateur-remarques-${date}.json`;
+    }
+
+    function exportDoc() {
+      const payload = {
+        exportVersion: 1, exportedAt: new Date().toISOString(),
+        generator: "generateur-remarques", appVersion: APP_VERSION,
+        siteName: doc.siteName, mode: doc.mode, url: doc.url,
+        linkText: doc.linkText,
+        includeVideoLink: doc.includeVideoLink,
+        includeFooterHelp: doc.includeFooterHelp,
+        simpleContent: doc.simpleContent, spacing: doc.spacing,
+        sections: doc.sections, styles: doc.styles,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = buildExportFileName(); a.click();
+      URL.revokeObjectURL(url);
+      showToast("Informations exportées ✓");
+    }
+
+    function importDoc(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed || typeof parsed !== "object") throw new Error("Format invalide");
+          doc = normalizeDoc(parsed); refreshUIFromDoc(); saveDoc();
+          showToast("Informations chargées ✓");
+        } catch (_) {
+          alert("Impossible de charger ce fichier. Utilisez une sauvegarde exportée depuis ce générateur.");
+        }
+        document.getElementById("importFileInput").value = "";
+      };
+      reader.readAsText(file);
+    }
+
+    /* ── Modales ── */
+
+    /** @type {string|null} ID de section cible pour le prochain ajout de champ */
+    let pendingAddFieldSectionId = null;
+
+    /**
+     * Ouvre la modale de choix du type de champ pour une section donnée.
+     * @param {string} sectionId ID de la section cible
+     */
+    function openAddField(sectionId) {
+      pendingAddFieldSectionId = sectionId;
+      const section = doc.sections.find((s) => s.id === sectionId);
+      document.getElementById("addFieldModalTitle").textContent = "Ajouter un champ";
+      document.getElementById("addFieldModalDesc").textContent =
+        section ? `Section : ${section.title}` : "";
+      document.getElementById("addFieldModal").classList.add("open");
+    }
+
+    function closeAddField() { document.getElementById("addFieldModal").classList.remove("open"); }
+
+    /**
+     * Ajoute un champ du type choisi à la section cible et ferme la modale.
+     * @param {"normal"|"notice"} type Type du champ
+     */
+    function confirmAddField(type) {
+      const section = doc.sections.find((s) => s.id === pendingAddFieldSectionId);
+      if (!section) return;
+      section.fields.push(makeField({
+        label: type === "notice" ? "Consigne importante" : "",
+        value: "",
+        type,
+        wrapAlarms: true,
+      }));
+      saveDoc(); renderSections(); closeAddField();
+    }
+
+    function toggleSectionModalOptions() {
+      const enabled = document.getElementById("sectionCollapsible").checked;
+      document.getElementById("sectionCollapsibleOptions").hidden = !enabled;
+      if (!enabled) document.getElementById("sectionOpenByDefault").checked = false;
+    }
+    function openAddSection() {
+      document.getElementById("sectionTitle").value = "";
+      document.getElementById("sectionLayout").value = "inline";
+      document.getElementById("sectionCollapsible").checked = false;
+      document.getElementById("sectionSummary").value = DEFAULT_SUMMARY_TEXT;
+      document.getElementById("sectionOpenByDefault").checked = false;
+      document.getElementById("sectionCollapsibleOptions").hidden = true;
+      document.getElementById("addSectionModal").classList.add("open");
+      document.getElementById("sectionTitle").focus();
+    }
+    function closeAddSection()  { document.getElementById("addSectionModal").classList.remove("open"); }
+    function confirmAddSection() {
+      const title  = document.getElementById("sectionTitle").value.trim();
+      if (!title) { document.getElementById("sectionTitle").focus(); return; }
+      doc.sections.push(makeSection({
+        title,
+        layout: document.getElementById("sectionLayout").value === "list" ? "list" : "inline",
+        collapsible: document.getElementById("sectionCollapsible").checked,
+        summaryText: document.getElementById("sectionSummary").value.trim() || DEFAULT_SUMMARY_TEXT,
+        openByDefault: document.getElementById("sectionOpenByDefault").checked,
+      }));
+      saveDoc(); renderSections(); renderStyleControls(); closeAddSection();
+    }
+
+    function resetAll() {
+      if (!confirm("Réinitialiser toutes les sections, champs et mise en forme ?")) return;
+      doc = defaultDoc(); saveDoc(); refreshUIFromDoc();
+    }
+    function resetSimple() {
+      if (!confirm("Effacer le texte de la remarque ?")) return;
+      doc.simpleContent = ""; saveDoc(); simpleEditorMounted = false; mountSimpleEditor(); updateOutput();
+    }
+
+    async function copyHtml() {
+      const html = document.getElementById("htmlOutput").value;
+      try {
+        await navigator.clipboard.writeText(html);
+        showToast("HTML copié dans le presse-papiers ✓");
+      } catch (_) {
+        document.getElementById("htmlOutput").select();
+        document.execCommand("copy");
+        showToast("HTML copié ✓");
+      }
+    }
+
+    /* ── Câblage des événements ── */
+
+    document.getElementById("btnExport").addEventListener("click", exportDoc);
+    document.getElementById("btnImport").addEventListener("click", () => document.getElementById("importFileInput").click());
+    document.getElementById("importFileInput").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) importDoc(f); });
+    document.getElementById("btnAddSection").addEventListener("click", openAddSection);
+    document.getElementById("btnReset").addEventListener("click", resetAll);
+    document.getElementById("btnResetSimple").addEventListener("click", resetSimple);
+    document.getElementById("btnModeVideo").addEventListener("click", () => setMode("video"));
+    document.getElementById("btnModeSimple").addEventListener("click", () => setMode("simple"));
+    document.getElementById("btnCopy").addEventListener("click", copyHtml);
+    document.getElementById("btnResetStyles").addEventListener("click", resetStyles);
+    document.getElementById("btnFieldCancel").addEventListener("click", closeAddField);
+    document.getElementById("btnAddNormalField").addEventListener("click", () => confirmAddField("normal"));
+    document.getElementById("btnAddNoticeField").addEventListener("click", () => confirmAddField("notice"));
+    document.getElementById("btnSectionCancel").addEventListener("click", closeAddSection);
+    document.getElementById("btnSectionConfirm").addEventListener("click", confirmAddSection);
+    document.getElementById("sectionCollapsible").addEventListener("change", toggleSectionModalOptions);
+
+    const stylesContainer = document.getElementById("stylesContainer");
+    stylesContainer.addEventListener("input", handleStyleChange);
+    stylesContainer.addEventListener("change", handleStyleChange);
+
+    document.getElementById("addFieldModal").addEventListener("click",   (e) => { if (e.target.id === "addFieldModal")   closeAddField(); });
+    document.getElementById("addSectionModal").addEventListener("click", (e) => { if (e.target.id === "addSectionModal") closeAddSection(); });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { closeAddField(); closeAddSection(); }
+      if (e.key === "Enter") {
+        if (document.getElementById("addSectionModal").classList.contains("open")) confirmAddSection();
+      }
+    });
+
+    document.getElementById("siteNameInput").addEventListener("input", (e) => { doc.siteName = e.target.value; saveDoc(); });
+    document.getElementById("urlInput").addEventListener("input", (e) => { doc.url = e.target.value; saveDoc(); updateOutput(); });
+    document.getElementById("linkTextInput").addEventListener("input", (e) => { doc.linkText = e.target.value || DEFAULT_LINK_TEXT; saveDoc(); updateOutput(); });
+    document.getElementById("includeVideoLink").addEventListener("change", (e) => { doc.includeVideoLink = e.target.checked; saveDoc(); updateOutput(); });
+    document.getElementById("includeFooterHelp").addEventListener("change", (e) => { doc.includeFooterHelp = e.target.checked; saveDoc(); updateOutput(); });
+
+    const previewBgInput = document.getElementById("previewBgInput");
+    previewBgInput.value = previewBg;
+    previewBgInput.addEventListener("input", (e) => {
+      previewBg = e.target.value;
+      localStorage.setItem(PREVIEW_BG_KEY, previewBg);
+      updateOutput();
+    });
+
+    /* ── Initialisation ── */
+    document.getElementById("appTitle").title = `Version ${APP_VERSION} (${APP_BUILD})`;
+    loadDoc();
+    refreshUIFromDoc();
+  </script>
+</body>
+</html>
