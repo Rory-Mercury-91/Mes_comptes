@@ -693,7 +693,12 @@
       </div>
     </div>
     <div class="header-actions">
+      <div class="mode-switch" id="headerModeSwitch">
+        <button type="button" class="mode-btn active" id="btnModeVideo">Consigne vidéo</button>
+        <button type="button" class="mode-btn" id="btnModeSimple">Remarque simple</button>
+      </div>
       <div class="data-toolbar">
+        <button type="button" id="btnReset" title="Tout réinitialiser">↺ Réinitialiser</button>
         <button type="button" id="btnExport">⬆ Exporter</button>
         <button type="button" id="btnImport">⬇ Charger</button>
         <input type="file" id="importFileInput" accept=".json,application/json" hidden />
@@ -707,12 +712,6 @@
 
     <!-- ─ Colonne gauche ─ -->
     <div class="col-left">
-
-      <!-- Mode -->
-      <div class="mode-switch">
-        <button type="button" class="mode-btn active" id="btnModeVideo">Consigne vidéo</button>
-        <button type="button" class="mode-btn" id="btnModeSimple">Remarque simple</button>
-      </div>
 
       <!-- ── Panneau : Fichier / Site ── -->
       <div class="panel open" id="panelSite">
@@ -774,7 +773,6 @@
           </button>
           <div class="panel-body">
             <div class="panel-body-actions">
-              <button type="button" class="btn-ghost" id="btnReset">↺ Réinitialiser</button>
               <button type="button" id="btnAddSection">+ Section</button>
               <button type="button" class="btn-primary" id="btnAddField">+ Champ</button>
             </div>
