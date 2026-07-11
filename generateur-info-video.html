@@ -774,7 +774,6 @@
           <div class="panel-body">
             <div class="panel-body-actions">
               <button type="button" id="btnAddSection">+ Section</button>
-              <button type="button" class="btn-primary" id="btnAddField">+ Champ</button>
             </div>
             <div id="sectionsContainer"></div>
           </div>
@@ -847,52 +846,35 @@
   <!-- ══ Toast ══ -->
   <div class="toast" id="toast"></div>
 
-  <!-- ══ Modale : ajout de champ ══ -->
+  <!-- ══ Modale : ajout de champ (type uniquement) ══ -->
   <div class="modal-overlay" id="addFieldModal">
-    <div class="modal modal-section">
-      <h3>Ajouter un champ</h3>
-      <p class="modal-desc">Le champ sera ajouté à la fin de la section choisie.</p>
-
-      <div class="modal-field">
-        <label for="fieldSection">Section de destination</label>
-        <select id="fieldSection"></select>
+    <div class="modal" style="width:min(380px,100%);">
+      <h3 id="addFieldModalTitle">Ajouter un champ</h3>
+      <p class="modal-desc" id="addFieldModalDesc"></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin:0.5rem 0 1rem;">
+        <button type="button" id="btnAddNormalField" style="
+          padding:1rem 0.5rem;border-radius:8px;
+          border:2px solid var(--border);background:var(--surface);
+          color:var(--text);font-size:0.88rem;font-weight:600;
+          display:flex;flex-direction:column;align-items:center;gap:0.4rem;
+          cursor:pointer;transition:border-color .15s,background .15s;">
+          <span style="font-size:1.4rem;">📝</span>
+          Classique
+          <small style="font-weight:400;color:var(--muted);font-size:0.73rem;">Libellé + valeur</small>
+        </button>
+        <button type="button" id="btnAddNoticeField" style="
+          padding:1rem 0.5rem;border-radius:8px;
+          border:2px solid var(--border);background:var(--surface);
+          color:var(--text);font-size:0.88rem;font-weight:600;
+          display:flex;flex-direction:column;align-items:center;gap:0.4rem;
+          cursor:pointer;transition:border-color .15s,background .15s;">
+          <span style="font-size:1.4rem;">🚨</span>
+          Consigne importante
+          <small style="font-weight:400;color:var(--muted);font-size:0.73rem;">Bandeau rouge</small>
+        </button>
       </div>
-
-      <div class="modal-field">
-        <label for="fieldType">Type de champ</label>
-        <select id="fieldType">
-          <option value="normal">Champ classique (libellé + valeur)</option>
-          <option value="notice">Consigne importante (bandeau rouge)</option>
-        </select>
-      </div>
-
-      <div class="modal-field" id="fieldLabelWrap">
-        <label for="fieldLabel">Libellé</label>
-        <input type="text" id="fieldLabel" placeholder="Libellé du champ" />
-      </div>
-
-      <div class="modal-field">
-        <label for="fieldValue">Valeur</label>
-        <div class="modal-value-row">
-          <input type="text" id="fieldValue" placeholder="Saisir la valeur" />
-          <button type="button" class="btn-img" id="btnFieldInsertImage" title="Insérer le code &lt;img&gt; de l'alarme">+ Image</button>
-        </div>
-      </div>
-
-      <div id="fieldNoticeOptions" class="modal-panel" hidden>
-        <p class="modal-panel-title">Options consigne</p>
-        <label class="modal-check-row" for="fieldWrapAlarms">
-          <input type="checkbox" id="fieldWrapAlarms" checked>
-          <span class="modal-check-row-text">
-            <strong>Icônes d'alarme auto</strong>
-            <small>Images avant et après le texte.</small>
-          </span>
-        </label>
-      </div>
-
       <div class="modal-actions">
         <button type="button" id="btnFieldCancel">Annuler</button>
-        <button type="button" class="btn-primary" id="btnFieldConfirm">Ajouter</button>
       </div>
     </div>
   </div>
@@ -1785,39 +1767,36 @@
 
     /* ── Modales ── */
 
-    function toggleFieldModalNoticeOptions() {
-      const isNotice = document.getElementById("fieldType").value === "notice";
-      document.getElementById("fieldNoticeOptions").hidden = !isNotice;
-      document.getElementById("fieldLabelWrap").hidden = isNotice;
-      if (isNotice) document.getElementById("fieldLabel").value = "";
+    /** @type {string|null} ID de section cible pour le prochain ajout de champ */
+    let pendingAddFieldSectionId = null;
+
+    /**
+     * Ouvre la modale de choix du type de champ pour une section donnée.
+     * @param {string} sectionId ID de la section cible
+     */
+    function openAddField(sectionId) {
+      pendingAddFieldSectionId = sectionId;
+      const section = doc.sections.find((s) => s.id === sectionId);
+      document.getElementById("addFieldModalTitle").textContent = "Ajouter un champ";
+      document.getElementById("addFieldModalDesc").textContent =
+        section ? `Section : ${section.title}` : "";
+      document.getElementById("addFieldModal").classList.add("open");
     }
 
-    function openAddField(preselectSectionId) {
-      if (doc.sections.length === 0) { alert("Ajoutez d'abord une section."); return; }
-      const sel = document.getElementById("fieldSection");
-      sel.innerHTML = doc.sections.map((s) => `<option value="${s.id}">${escapeHtml(s.title || "Section")}</option>`).join("");
-      if (preselectSectionId) sel.value = preselectSectionId;
-      document.getElementById("fieldLabel").value = "";
-      document.getElementById("fieldValue").value = "";
-      document.getElementById("fieldType").value = "normal";
-      document.getElementById("fieldWrapAlarms").checked = true;
-      toggleFieldModalNoticeOptions();
-      document.getElementById("addFieldModal").classList.add("open");
-      document.getElementById("fieldLabel").focus();
-    }
-    function closeAddField()  { document.getElementById("addFieldModal").classList.remove("open"); }
-    function confirmAddField() {
-      const sectionId = document.getElementById("fieldSection").value;
-      const label     = document.getElementById("fieldLabel").value.trim();
-      const type      = document.getElementById("fieldType").value === "notice" ? "notice" : "normal";
-      if (!label && type !== "notice") { document.getElementById("fieldLabel").focus(); return; }
-      const section = doc.sections.find((s) => s.id === sectionId);
+    function closeAddField() { document.getElementById("addFieldModal").classList.remove("open"); }
+
+    /**
+     * Ajoute un champ du type choisi à la section cible et ferme la modale.
+     * @param {"normal"|"notice"} type Type du champ
+     */
+    function confirmAddField(type) {
+      const section = doc.sections.find((s) => s.id === pendingAddFieldSectionId);
       if (!section) return;
       section.fields.push(makeField({
-        label: label || "Consigne importante",
-        value: document.getElementById("fieldValue").value,
+        label: type === "notice" ? "Consigne importante" : "",
+        value: "",
         type,
-        wrapAlarms: document.getElementById("fieldWrapAlarms").checked,
+        wrapAlarms: true,
       }));
       saveDoc(); renderSections(); closeAddField();
     }
@@ -1878,7 +1857,6 @@
     document.getElementById("btnImport").addEventListener("click", () => document.getElementById("importFileInput").click());
     document.getElementById("importFileInput").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) importDoc(f); });
     document.getElementById("btnAddSection").addEventListener("click", openAddSection);
-    document.getElementById("btnAddField").addEventListener("click", () => openAddField(null));
     document.getElementById("btnReset").addEventListener("click", resetAll);
     document.getElementById("btnResetSimple").addEventListener("click", resetSimple);
     document.getElementById("btnModeVideo").addEventListener("click", () => setMode("video"));
@@ -1886,9 +1864,8 @@
     document.getElementById("btnCopy").addEventListener("click", copyHtml);
     document.getElementById("btnResetStyles").addEventListener("click", resetStyles);
     document.getElementById("btnFieldCancel").addEventListener("click", closeAddField);
-    document.getElementById("btnFieldConfirm").addEventListener("click", confirmAddField);
-    document.getElementById("fieldType").addEventListener("change", toggleFieldModalNoticeOptions);
-    document.getElementById("btnFieldInsertImage").addEventListener("click", () => insertImageTag(document.getElementById("fieldValue")));
+    document.getElementById("btnAddNormalField").addEventListener("click", () => confirmAddField("normal"));
+    document.getElementById("btnAddNoticeField").addEventListener("click", () => confirmAddField("notice"));
     document.getElementById("btnSectionCancel").addEventListener("click", closeAddSection);
     document.getElementById("btnSectionConfirm").addEventListener("click", confirmAddSection);
     document.getElementById("sectionCollapsible").addEventListener("change", toggleSectionModalOptions);
@@ -1903,8 +1880,7 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") { closeAddField(); closeAddSection(); }
       if (e.key === "Enter") {
-        if (document.getElementById("addFieldModal").classList.contains("open"))   confirmAddField();
-        else if (document.getElementById("addSectionModal").classList.contains("open")) confirmAddSection();
+        if (document.getElementById("addSectionModal").classList.contains("open")) confirmAddSection();
       }
     });
 
