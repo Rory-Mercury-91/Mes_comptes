@@ -5,18 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Générateur Remarques</title>
   <style>
+    /* ── Variables ── */
     :root {
-      --bg: #12161c;
-      --card: #1b212a;
-      --surface: #232b35;
-      --surface-hover: #2c353f;
-      --border: #2c353f;
-      --accent: #3a97d4;
-      --accent-hover: #2980b9;
-      --danger: #e57373;
-      --text: #e6eaef;
-      --muted: #9aa7b4;
-      --radius: 8px;
+      --bg:            #0d1117;
+      --card:          #161b22;
+      --surface:       #1f2937;
+      --surface-hover: #27323f;
+      --border:        #30363d;
+      --accent:        #58a6ff;
+      --accent-hover:  #388bfd;
+      --accent-dim:    #1d3557;
+      --danger:        #f87171;
+      --danger-dim:    #3b1919;
+      --success:       #34d399;
+      --text:          #e6edf3;
+      --muted:         #8b949e;
+      --radius:        10px;
+      --radius-sm:     6px;
+      --shadow:        0 4px 24px rgba(0,0,0,.45);
     }
 
     * { box-sizing: border-box; }
@@ -27,449 +33,466 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.45;
+      font-size: 14px;
     }
 
+    /* ── Header ── */
     header {
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 1rem 1.5rem;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+
+    .header-logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent) 0%, #9c6af7 100%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
     }
 
     header h1 {
-      margin: 0 0 0.25rem;
-      font-size: 1.35rem;
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
       cursor: help;
+      letter-spacing: -0.01em;
     }
 
     header p {
       margin: 0;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
-    main {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 1.25rem;
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── Layout principal 2 colonnes ── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 480px 1fr;
+      grid-template-rows: 1fr;
+      gap: 0;
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+
+    /* Colonne gauche : saisie */
+    .col-left {
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      padding: 1rem;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 0.75rem;
     }
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
+    /* Colonne droite : HTML + aperçu */
+    .col-right {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      overflow: hidden;
     }
 
-    .card h2 {
-      margin: 0 0 0.85rem;
-      font-size: 1rem;
-      color: var(--accent);
-    }
-
-    .fields-toolbar {
+    .output-pane {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      min-height: 0;
     }
 
+    .output-pane:last-child { border-bottom: none; }
+
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1rem;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .pane-header h2 {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    #htmlOutput {
+      flex: 1;
+      resize: none;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: #0d1117;
+      color: #c9d1d9;
+      outline: none;
+      line-height: 1.5;
+      overflow: auto;
+    }
+
+    #previewFrame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #fff;
+      min-height: 0;
+    }
+
+    /* ── Boutons ── */
     button {
       cursor: pointer;
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
-      border-radius: 6px;
-      padding: 0.45rem 0.75rem;
-      font-size: 0.875rem;
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: background .15s, border-color .15s;
     }
-
     button:hover { background: var(--surface-hover); }
-
-    input[type="text"],
-    input[type="url"],
-    input[type="number"],
-    input:not([type]),
-    select,
-    textarea {
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    input::placeholder { color: #6b7885; }
 
     .btn-primary {
       background: var(--accent);
-      color: #fff;
+      color: #0d1117;
       border-color: var(--accent);
+      font-weight: 600;
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    .btn-success {
+      background: #166534;
+      color: #d1fae5;
+      border-color: #166534;
+      font-weight: 600;
+    }
+    .btn-success:hover { background: #14532d; }
+
+    .btn-danger { color: var(--danger); border-color: var(--danger-dim); }
+    .btn-danger:hover { background: var(--danger-dim); }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+      padding: 0.35rem 0.5rem;
+    }
+    .btn-ghost:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
+
+    .btn-move {
+      width: 26px; height: 22px;
+      padding: 0;
+      font-size: 0.65rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-move:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── Panneau réductible (card collapsible) ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
     }
 
-    .btn-primary:hover { background: var(--accent-hover); }
-
-    .btn-danger {
-      color: var(--danger);
-      border-color: #5c3535;
-    }
-
-    .form-rows {
+    .panel-toggle {
+      width: 100%;
       display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin: 1rem 0;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 0.85rem;
+      background: none;
+      border: none;
+      border-radius: 0;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background .15s;
     }
+    .panel-toggle:hover { background: var(--surface); }
 
-    .form-rows-top {
-      margin: 0 0 0.5rem;
-    }
-
-    .hint-inline {
-      margin: -0.35rem 0 0.85rem;
-      font-size: 0.8rem;
-    }
-
-    .section-move-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
+    .panel-toggle-icon {
+      font-size: 0.65rem;
+      color: var(--muted);
+      transition: transform .2s;
       flex-shrink: 0;
     }
+    .panel.open .panel-toggle-icon { transform: rotate(90deg); }
 
+    .panel-toggle-title { flex: 1; }
+
+    .panel-toggle-badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.1rem 0.45rem;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .panel-body {
+      display: none;
+      padding: 0.75rem 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+    .panel.open .panel-body { display: block; }
+
+    .panel-body-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+
+    /* ── Inputs ── */
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    select, textarea {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.55rem;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    input::placeholder { color: #4b5563; }
+
+    /* ── Ligne de formulaire ── */
     .form-row {
       display: grid;
-      grid-template-columns: 130px 1fr;
-      gap: 0.75rem;
+      grid-template-columns: 140px 1fr;
+      gap: 0.5rem;
       align-items: center;
-      padding: 0.55rem 0.65rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
     }
 
     .form-row label {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      color: var(--text);
+      color: var(--muted);
     }
 
     .form-row input,
-    .form-row select {
-      width: 100%;
-      padding: 0.4rem 0.55rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.875rem;
-      background: var(--bg);
-      color: var(--text);
+    .form-row select { width: 100%; }
+
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
     }
 
     .file-url-row {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
       align-items: center;
       width: 100%;
     }
+    .file-url-row input { flex: 1; min-width: 0; }
+    .file-url-row button { flex-shrink: 0; white-space: nowrap; }
 
-    .file-url-row input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .file-url-row button {
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    .form-options {
+    /* ── Options (checkboxes) ── */
+    .options-grid {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      margin: 0 0 1rem;
-      padding: 0.65rem 0.75rem;
-      border: 1px dashed var(--border);
-      border-radius: 6px;
-      background: #14181d;
+      gap: 0.4rem;
     }
 
+    .ctrl {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .ctrl input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+    .ctrl input[type="color"] {
+      width: 30px; height: 24px; padding: 0;
+      border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
+    }
+    .ctrl input[type="color"]:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ctrl input[type="number"] {
+      width: 58px; padding: 0.25rem 0.3rem;
+      font-size: 0.78rem;
+    }
+
+    /* ── Mode switch ── */
     .mode-switch {
       display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
     }
-
-    .data-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
     .mode-btn {
-      flex: 1 1 220px;
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 0.45rem 0.5rem;
+      font-weight: 500;
     }
+    .mode-btn:hover { background: var(--surface); color: var(--text); }
+    .mode-btn.active { background: var(--accent-dim); color: var(--accent); font-weight: 700; }
+    .mode-btn + .mode-btn { border-left: 1px solid var(--border); }
 
-    .mode-btn.active {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
+    /* ── Badge type ── */
+    .type-badge {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
+    .type-badge.inline     { background: #3a2a15; color: #f0a860; }
+    .type-badge.list       { background: #14291a; color: #6ee29e; }
+    .type-badge.notice     { background: #3b1919; color: #f87171; }
+    .type-badge.collapsible{ background: #1e1a35; color: #b39ddb; }
 
+    /* ── Blocs section ── */
     .section-block {
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem;
-      margin-bottom: 0.85rem;
-      background: #161b22;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.65rem;
+      overflow: hidden;
+      background: var(--bg);
     }
 
     .section-head {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
+      padding: 0.5rem 0.65rem;
+      background: var(--surface);
+      cursor: pointer;
+      user-select: none;
     }
+    .section-head:hover { background: var(--surface-hover); }
+
+    .section-chevron {
+      font-size: 0.6rem;
+      color: var(--muted);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .section-block.open .section-chevron { transform: rotate(90deg); }
 
     .section-title-input {
-      flex: 1 1 220px;
-      padding: 0.4rem 0.55rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    .fields-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    .field-row input {
-      width: 100%;
-      padding: 0.4rem 0.55rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.875rem;
-    }
-
-    .field-row textarea.field-value-input {
-      width: 100%;
-      min-height: 72px;
-      padding: 0.4rem 0.55rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.875rem;
-      font-family: inherit;
-      resize: vertical;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .field-row.multiline-row {
-      align-items: start;
-    }
-
-    .field-row.multiline-row .field-move-btns {
-      padding-top: 0.35rem;
-    }
-
-    .field-row .field-label-input {
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .type-badge {
-      font-size: 0.7rem;
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-      background: #2c353f;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .type-badge.inline { background: #3a2a15; color: #f0a860; }
-    .type-badge.list { background: #17331c; color: #7bc98a; }
-    .type-badge.notice { background: #4a1515; color: #f47c7c; }
-    .type-badge.collapsible { background: #2a2040; color: #b39ddb; }
-    .type-badge.richtext { background: #1a2a3a; color: #7eb8e8; }
-
-    .richtext-wrap {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      background: #ffffff;
-    }
-
-    .richtext-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      align-items: center;
-      padding: 0.5rem;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .richtext-btn {
-      min-width: 34px;
-      height: 34px;
-      padding: 0 0.55rem;
-      font-weight: 700;
-      font-size: 0.85rem;
-    }
-
-    .richtext-btn.italic-btn { font-style: italic; }
-    .richtext-btn.underline-btn { text-decoration: underline; }
-
-    .richtext-color {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.78rem;
-      color: var(--muted);
-      padding: 0 0.25rem;
-    }
-
-    .richtext-color input[type="color"] {
-      width: 34px;
-      height: 28px;
-      padding: 0;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      cursor: pointer;
+      flex: 1;
+      min-width: 80px;
       background: transparent;
-    }
-
-    .richtext-size-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.2rem;
-      padding: 0 0.2rem;
-    }
-
-    .richtext-size-label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-right: 0.1rem;
-      white-space: nowrap;
-    }
-
-    .richtext-size-btn {
-      min-width: 30px;
-      font-size: 0.72rem;
+      border: none;
+      border-bottom: 1px dashed transparent;
+      border-radius: 0;
+      color: var(--text);
+      font-size: 0.88rem;
       font-weight: 600;
+      padding: 0.1rem 0.25rem;
     }
-
-    .richtext-editor {
-      min-height: 180px;
-      padding: 0.85rem;
-      color: #000000;
-      background: #ffffff;
-      font-family: "Segoe UI", sans-serif;
-      font-size: 0.95rem;
-      line-height: 1.55;
+    .section-title-input:focus {
       outline: none;
+      border-bottom-color: var(--accent);
     }
 
-    .richtext-editor:focus {
-      box-shadow: inset 0 0 0 2px var(--accent);
-    }
+    .section-move-btns { display: flex; flex-direction: column; gap: 0.1rem; flex-shrink: 0; }
 
-    .richtext-hint {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin: 0 0 0.5rem;
+    .section-body {
+      display: none;
+      padding: 0.65rem;
+      border-top: 1px solid var(--border);
     }
+    .section-block.open .section-body { display: block; }
 
     .section-options {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 0.6rem;
       align-items: center;
-      margin-bottom: 0.75rem;
-      padding: 0.55rem 0.65rem;
+      padding: 0.5rem 0.55rem;
+      margin-bottom: 0.6rem;
       border: 1px dashed var(--border);
-      border-radius: 6px;
-      background: #14181d;
+      border-radius: var(--radius-sm);
+      background: #0d1117;
     }
-
     .section-options input[type="text"] {
-      flex: 1 1 220px;
-      padding: 0.35rem 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.85rem;
-      background: var(--bg);
-      color: var(--text);
+      flex: 1 1 180px;
+      font-size: 0.8rem;
     }
+    .section-options input[type="text"]:disabled { opacity: 0.35; }
 
-    .section-options input[type="text"]:disabled {
-      opacity: 0.45;
+    .fields-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
     }
 
     .field-row {
-      grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: auto 88px 1fr 1fr auto auto auto;
-      gap: 0.5rem;
+      grid-template-columns: auto 80px 1fr 1fr auto auto;
+      gap: 0.4rem;
       align-items: center;
-      padding: 0.6rem;
+      padding: 0.45rem 0.55rem;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       background: var(--surface);
     }
+    .field-row.notice-row { border-color: #4b2020; background: #1c1010; }
+    .field-row.multiline-row { align-items: start; }
+    .field-row.multiline-row .field-move-btns { padding-top: 0.3rem; }
 
-    .field-row.notice-row {
-      border-color: #6b3030;
-      background: #261a1a;
-    }
+    .field-move-btns { display: flex; flex-direction: column; gap: 0.1rem; }
 
-    .field-move-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-
-    .btn-move {
-      width: 28px;
-      height: 24px;
-      padding: 0;
-      font-size: 0.7rem;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-move:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    .field-row .field-type-select {
+    .field-type-select {
       width: 100%;
-      padding: 0.35rem 0.25rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.75rem;
-      background: var(--bg);
-      color: var(--text);
+      padding: 0.3rem 0.25rem;
+      font-size: 0.72rem;
+    }
+
+    .field-label-input { font-weight: 600; }
+
+    .field-row textarea.field-value-input {
+      width: 100%;
+      min-height: 62px;
+      resize: vertical;
+      font-family: inherit;
     }
 
     .btn-img {
-      font-size: 0.75rem;
-      padding: 0.35rem 0.5rem;
+      font-size: 0.72rem;
+      padding: 0.3rem 0.45rem;
       white-space: nowrap;
     }
 
@@ -477,111 +500,97 @@
       grid-column: 1 / -1;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 0.6rem;
       align-items: center;
       padding-top: 0.35rem;
-      border-top: 1px dashed #4a3030;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .notice-options input[type="text"] {
-      flex: 1 1 280px;
-      padding: 0.35rem 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-
-    @media (max-width: 1100px) {
-      .field-row {
-        grid-template-columns: 1fr 1fr;
-      }
-      .field-row .field-type-select {
-        grid-column: span 1;
-      }
-    }
-
-    .output-panels {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      min-height: 420px;
-    }
-
-    @media (max-width: 900px) {
-      .output-panels { grid-template-columns: 1fr; }
-      .fields-grid { grid-template-columns: 1fr; }
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.6rem;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .panel-header h2 { margin: 0; }
-
-    #htmlOutput {
-      width: 100%;
-      height: 360px;
-      font-family: Consolas, "Courier New", monospace;
+      border-top: 1px dashed #4b2020;
       font-size: 0.78rem;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      resize: vertical;
-      background: #1e1e1e;
-      color: #d4d4d4;
-    }
-
-    #previewFrame {
-      width: 100%;
-      height: 360px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      background: #2e7d32;
-      color: #fff;
-      padding: 0.65rem 1rem;
-      border-radius: 6px;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.25s, transform 0.25s;
-      pointer-events: none;
-      z-index: 100;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .hint {
-      font-size: 0.8rem;
       color: var(--muted);
+    }
+    .notice-options input[type="text"] { flex: 1 1 220px; }
+
+    .section-add-field-btn {
+      width: 100%;
       margin-top: 0.5rem;
+      font-size: 0.78rem;
+      border-style: dashed;
+      color: var(--muted);
+    }
+    .section-add-field-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Mise en forme ── */
+    .style-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      margin-bottom: 0.4rem;
+    }
+    .style-row-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .style-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
     }
 
+    /* ── Richtext ── */
+    .richtext-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .richtext-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      padding: 0.45rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .richtext-btn {
+      min-width: 30px; height: 30px;
+      padding: 0 0.45rem;
+      font-weight: 700; font-size: 0.8rem;
+    }
+    .richtext-btn.italic-btn  { font-style: italic; }
+    .richtext-btn.underline-btn { text-decoration: underline; }
+    .richtext-color {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: var(--muted); padding: 0 0.2rem;
+    }
+    .richtext-color input[type="color"] { width: 30px; height: 26px; }
+    .richtext-size-group {
+      display: inline-flex; align-items: center; gap: 0.2rem; padding: 0 0.2rem;
+    }
+    .richtext-size-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    .richtext-size-btn { min-width: 26px; font-size: 0.7rem; font-weight: 600; }
+    .richtext-editor {
+      min-height: 160px;
+      padding: 0.75rem;
+      color: #000; background: #fff;
+      font-family: "Segoe UI", sans-serif; font-size: 0.9rem;
+      outline: none; line-height: 1.5;
+    }
+    .richtext-editor:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+
+    /* ── Modales ── */
     .modal-overlay {
       display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
       z-index: 50;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
       padding: 1rem;
     }
-
     .modal-overlay.open { display: flex; }
 
     .modal {
@@ -589,375 +598,284 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.25rem 1.35rem;
-      width: min(420px, 100%);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      width: min(440px, 100%);
+      box-shadow: var(--shadow);
     }
-
     .modal.modal-section {
       width: min(500px, 100%);
       max-height: min(92vh, 900px);
       overflow-y: auto;
     }
-
-    .modal h3 {
-      margin: 0 0 0.35rem;
-      font-size: 1.05rem;
+    .modal h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .modal-desc { margin: 0 0 1rem; font-size: 0.8rem; color: var(--muted); }
+    .modal-field { margin-bottom: 0.85rem; }
+    .modal-field > label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .modal-field input, .modal-field select,
+    .modal input:not([type="checkbox"]), .modal select {
+      width: 100%; padding: 0.4rem 0.55rem;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg); color: var(--text);
     }
-
-    .modal-desc {
-      margin: 0 0 1rem;
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .modal-field {
-      margin-bottom: 0.9rem;
-    }
-
-    .modal-field > label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-    }
-
-    .modal-field input,
-    .modal-field select,
-    .modal input:not([type="checkbox"]),
-    .modal select {
-      width: 100%;
-      padding: 0.45rem 0.55rem;
-      margin-bottom: 0;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      background: var(--bg);
-      color: var(--text);
-    }
-
     .modal-panel {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.85rem;
-      margin-bottom: 1rem;
-      background: var(--surface);
-      min-width: 0;
-      overflow: hidden;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0.75rem; margin-bottom: 0.9rem; background: var(--surface);
     }
-
     .modal-panel-title {
-      margin: 0 0 0.65rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
+      margin: 0 0 0.55rem; font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
     }
-
     .modal-check-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.65rem;
-      cursor: pointer;
-      margin: 0;
-      font-weight: normal;
-      min-width: 0;
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      cursor: pointer; margin: 0; font-weight: normal; min-width: 0;
     }
-
     .modal-check-row input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      margin: 0.1rem 0 0;
-      flex-shrink: 0;
-      accent-color: var(--accent);
-      cursor: pointer;
+      width: 15px; height: 15px; margin: 0.1rem 0 0;
+      flex-shrink: 0; accent-color: var(--accent); cursor: pointer;
     }
-
     .modal-check-row-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      font-size: 0.875rem;
-      color: var(--text);
-      line-height: 1.35;
-      min-width: 0;
-      flex: 1;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      display: flex; flex-direction: column; gap: 0.1rem;
+      font-size: 0.83rem; color: var(--text); line-height: 1.35; flex: 1;
     }
-
-    .modal-check-row-text strong {
-      font-weight: 600;
-    }
-
-    .modal-check-row-text small {
-      font-size: 0.78rem;
-      color: var(--muted);
-      font-weight: normal;
-      white-space: normal;
-    }
-
-    .modal-subpanel {
-      margin-top: 0.85rem;
-      padding-top: 0.85rem;
-      border-top: 1px dashed var(--border);
-    }
-
-    .modal-subpanel[hidden] {
-      display: none !important;
-    }
-
+    .modal-check-row-text small { font-size: 0.76rem; color: var(--muted); font-weight: normal; }
+    .modal-subpanel { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--border); }
+    .modal-subpanel[hidden],
     .modal-panel[hidden],
-    .modal-field[hidden] {
-      display: none !important;
+    .modal-field[hidden] { display: none !important; }
+    .modal-value-row { display: flex; gap: 0.5rem; align-items: stretch; }
+    .modal-value-row input { flex: 1; min-width: 0; }
+    .modal-value-row .btn-img { flex-shrink: 0; display: flex; align-items: center; }
+    .modal label:not(.modal-check-row) { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 1.25rem; right: 1.25rem;
+      background: #166534; color: #d1fae5;
+      padding: 0.6rem 1rem; border-radius: var(--radius-sm);
+      font-size: 0.82rem; font-weight: 500;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .22s, transform .22s;
+      pointer-events: none; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Hint / labels secondaires ── */
+    .hint { font-size: 0.76rem; color: var(--muted); margin: 0.4rem 0 0; line-height: 1.45; }
+
+    /* ── Séparateur ── */
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 0.6rem 0; }
+
+    /* ── Toolbar data (export/import) ── */
+    .data-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
     }
 
-    .modal-value-row {
-      display: flex;
-      gap: 0.5rem;
-      align-items: stretch;
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .app-layout { grid-template-columns: 400px 1fr; }
     }
-
-    .modal-value-row input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .modal-value-row .btn-img {
-      flex-shrink: 0;
-      align-self: stretch;
-      display: flex;
-      align-items: center;
-    }
-
-    .modal label:not(.modal-check-row) {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
-
-    .modal > label:not(.modal-check-row) + input,
-    .modal > label:not(.modal-check-row) + select,
-    .modal > select,
-    .modal > input:not([type="checkbox"]) {
-      margin-bottom: 0.75rem;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: flex-end;
-    }
-
-    .style-row {
-      display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 0.75rem;
-      align-items: center;
-      padding: 0.6rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
-      margin-bottom: 0.5rem;
-    }
-
-    .style-row-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .style-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.85rem;
-      align-items: center;
-    }
-
-    .ctrl {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.8rem;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .ctrl input[type="color"] {
-      width: 34px;
-      height: 26px;
-      padding: 0;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .ctrl input[type="color"]:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .ctrl input[type="number"] {
-      width: 60px;
-      padding: 0.25rem 0.35rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-
-    @media (max-width: 900px) {
+    @media (max-width: 860px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .col-left { border-right: none; border-bottom: 1px solid var(--border); max-height: 70vh; }
+      .col-right { grid-template-rows: 300px 300px; height: auto; }
       .style-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+
+  <!-- ══ En-tête ══ -->
   <header>
-    <h1 id="appTitle">Générateur Remarques</h1>
-    <p id="headerDesc">Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.</p>
-  </header>
-
-  <main>
-    <section class="card">
-      <div class="form-rows form-rows-top">
-        <div class="form-row">
-          <label for="siteNameInput">Site</label>
-          <input type="text" id="siteNameInput" placeholder="Saisir la valeur" />
-        </div>
+    <div class="header-left">
+      <div class="header-logo">✦</div>
+      <div>
+        <h1 id="appTitle">Générateur Remarques</h1>
+        <p id="headerDesc">Complétez les champs — le HTML se met à jour en temps réel.</p>
       </div>
-      <p class="hint hint-inline">Nom de fichier à l'export JSON uniquement — absent du HTML généré.</p>
-
+    </div>
+    <div class="header-actions">
       <div class="data-toolbar">
-        <button type="button" id="btnExport">Exporter les informations</button>
-        <button type="button" id="btnImport">Charger les informations</button>
+        <button type="button" id="btnExport">⬆ Exporter</button>
+        <button type="button" id="btnImport">⬇ Charger</button>
         <input type="file" id="importFileInput" accept=".json,application/json" hidden />
       </div>
+      <button type="button" class="btn-success" id="btnCopy">⎘ Copier le HTML</button>
+    </div>
+  </header>
 
+  <!-- ══ Mise en page 2 colonnes ══ -->
+  <div class="app-layout">
+
+    <!-- ─ Colonne gauche ─ -->
+    <div class="col-left">
+
+      <!-- Mode -->
       <div class="mode-switch">
-        <button type="button" class="mode-btn active" id="btnModeVideo">Générateur consigne vidéo</button>
-        <button type="button" class="mode-btn" id="btnModeSimple">Générateur remarque simple</button>
+        <button type="button" class="mode-btn active" id="btnModeVideo">Consigne vidéo</button>
+        <button type="button" class="mode-btn" id="btnModeSimple">Remarque simple</button>
       </div>
 
-      <div id="videoModePanel">
-        <div class="panel-header">
-          <h2 id="mainCardTitle">Sections et champs</h2>
-          <div class="fields-toolbar">
-            <button type="button" class="btn-primary" id="btnAddSection">+ Ajouter une section</button>
-            <button type="button" class="btn-primary" id="btnAddField">+ Ajouter un champ</button>
-            <button type="button" id="btnReset">Réinitialiser</button>
-          </div>
-        </div>
-
-        <div class="form-rows">
-          <div class="form-row">
-            <label for="urlInput">URL vidéo</label>
-            <input type="url" id="urlInput" placeholder="https://..." />
-          </div>
-          <div class="form-row">
-            <label for="linkTextInput">Texte du lien</label>
-            <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
-          </div>
-          <div class="form-row">
-            <label for="fileUrlInput">URL fichier</label>
-            <div class="file-url-row">
-              <input type="text" id="fileUrlInput" placeholder="https://.../document.pdf" />
-              <button type="button" id="btnPickFile">Parcourir…</button>
-              <input type="file" id="fileUrlPicker" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/pdf" hidden />
+      <!-- ── Panneau : Fichier / Site ── -->
+      <div class="panel open" id="panelSite">
+        <button type="button" class="panel-toggle" data-panel="panelSite">
+          <span class="panel-toggle-icon">▶</span>
+          <span class="panel-toggle-title">Fichier &amp; export</span>
+        </button>
+        <div class="panel-body">
+          <div class="form-stack">
+            <div class="form-row">
+              <label for="siteNameInput">Site</label>
+              <input type="text" id="siteNameInput" placeholder="Nom du site (export JSON)" />
             </div>
           </div>
-          <div class="form-row">
-            <label for="fileLinkTextInput">Texte du lien fichier</label>
-            <input type="text" id="fileLinkTextInput" placeholder="Saisir la valeur" />
+          <p class="hint">Utilisé uniquement pour nommer le fichier d'export — absent du HTML généré.</p>
+        </div>
+      </div>
+
+      <!-- ── Panneau mode Vidéo ── -->
+      <div id="videoModePanel">
+
+        <!-- Paramètres vidéo / fichier -->
+        <div class="panel open" id="panelParams">
+          <button type="button" class="panel-toggle" data-panel="panelParams">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Paramètres du lien</span>
+          </button>
+          <div class="panel-body">
+            <div class="form-stack">
+              <div class="form-row">
+                <label for="urlInput">URL vidéo</label>
+                <input type="url" id="urlInput" placeholder="https://…" />
+              </div>
+              <div class="form-row">
+                <label for="linkTextInput">Texte lien vidéo</label>
+                <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
+              </div>
+              <div class="form-row">
+                <label for="fileUrlInput">URL fichier</label>
+                <div class="file-url-row">
+                  <input type="text" id="fileUrlInput" placeholder="https://.../document.pdf" />
+                  <button type="button" id="btnPickFile">Parcourir…</button>
+                  <input type="file" id="fileUrlPicker" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" hidden />
+                </div>
+              </div>
+              <div class="form-row">
+                <label for="fileLinkTextInput">Texte lien fichier</label>
+                <input type="text" id="fileLinkTextInput" placeholder="Saisir la valeur" />
+              </div>
+            </div>
+            <hr class="sep">
+            <div class="options-grid">
+              <label class="ctrl">
+                <input type="checkbox" id="includeVideoLink" checked>
+                Inclure le lien vidéo dans le HTML
+              </label>
+              <label class="ctrl">
+                <input type="checkbox" id="includeFileLink">
+                Inclure le lien fichier dans le HTML
+              </label>
+              <label class="ctrl">
+                <input type="checkbox" id="includeFooterHelp" checked>
+                Inclure le texte d'aide du bas
+              </label>
+            </div>
           </div>
         </div>
 
-        <div class="form-options">
-          <label class="ctrl">
-            <input type="checkbox" id="includeVideoLink" checked>
-            Inclure le lien vidéo dans le HTML généré
-          </label>
-          <label class="ctrl">
-            <input type="checkbox" id="includeFileLink">
-            Inclure le lien fichier dans le HTML généré
-          </label>
-          <label class="ctrl">
-            <input type="checkbox" id="includeFooterHelp" checked>
-            Inclure le texte d'aide du bas dans le HTML généré
-          </label>
+        <!-- Sections & champs -->
+        <div class="panel open" id="panelSections">
+          <button type="button" class="panel-toggle" data-panel="panelSections">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Sections &amp; champs</span>
+            <span class="panel-toggle-badge" id="sectionsBadge">2</span>
+          </button>
+          <div class="panel-body">
+            <div class="panel-body-actions">
+              <button type="button" class="btn-ghost" id="btnReset">↺ Réinitialiser</button>
+              <button type="button" id="btnAddSection">+ Section</button>
+              <button type="button" class="btn-primary" id="btnAddField">+ Champ</button>
+            </div>
+            <div id="sectionsContainer"></div>
+          </div>
         </div>
 
-        <div id="sectionsContainer"></div>
+        <!-- Mise en forme -->
+        <div class="panel" id="panelStyles">
+          <button type="button" class="panel-toggle" data-panel="panelStyles">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Mise en forme</span>
+          </button>
+          <div class="panel-body">
+            <div class="panel-body-actions">
+              <button type="button" class="btn-ghost" id="btnResetStyles">↺ Réinitialiser</button>
+            </div>
+            <div id="stylesContainer"></div>
+            <p class="hint">Couleur, surlignement, taille, gras, italique, souligné pour chaque élément.</p>
+          </div>
+        </div>
 
-        <p class="hint" id="videoHint">
-          Chaque section a un titre et un type d'affichage : <strong>Inline</strong> (une ligne par champ)
-          ou <strong>Liste</strong> (puces &lt;li&gt;). Utilisez les flèches <strong>▲ ▼</strong> pour
-          réordonner les champs et les sections. Le type <strong>Consigne importante</strong> génère un bandeau rouge.
-          Le bouton <strong>+ Image</strong> insère le code &lt;img&gt; de l'alarme orange.
-          Cochez <strong>Réductible</strong> sur une <strong>section ajoutée</strong> pour un bloc
-          &lt;details&gt;/&lt;summary&gt;. Couleurs et styles : panneau <strong>Mise en forme</strong>.
-          Décochez le lien vidéo ou le texte du bas si vous n'en avez pas besoin.
-          Le lien vidéo reste toujours juste au-dessus de la section <strong>connexion vidéo</strong> et bouge avec elle.
-          Le lien fichier (PDF, etc.) s'affiche en fin de section <strong>Informations diverses</strong> : saisissez l'URL sur le serveur, ou utilisez <strong>Parcourir…</strong> pour reprendre le nom du fichier.
-          Utilisez <strong>Exporter / Charger les informations</strong> pour sauvegarder ou reprendre vos saisies.
-        </p>
-      </div>
+      </div><!-- /videoModePanel -->
 
+      <!-- ── Panneau mode Simple ── -->
       <div id="simpleModePanel" hidden>
-        <div class="panel-header">
-          <h2>Texte de la remarque</h2>
-          <button type="button" id="btnResetSimple">Réinitialiser</button>
+        <div class="panel open" id="panelSimple">
+          <button type="button" class="panel-toggle" data-panel="panelSimple">
+            <span class="panel-toggle-icon">▶</span>
+            <span class="panel-toggle-title">Texte de la remarque</span>
+          </button>
+          <div class="panel-body">
+            <div class="panel-body-actions">
+              <button type="button" class="btn-ghost" id="btnResetSimple">↺ Effacer</button>
+            </div>
+            <div id="simpleEditorHost"></div>
+          </div>
         </div>
-        <p class="hint">
-          Rédigez votre remarque avec l'éditeur ci-dessous. Le HTML généré contiendra
-          <strong>uniquement ce texte</strong>, sans sections ni lien vidéo.
-        </p>
-        <div id="simpleEditorHost"></div>
       </div>
-    </section>
 
-    <section class="card" id="stylesCard">
-      <div class="panel-header">
-        <h2>Mise en forme</h2>
-        <button type="button" id="btnResetStyles">Réinitialiser la mise en forme</button>
-      </div>
-      <div id="stylesContainer"></div>
-      <p class="hint">
-        Réglez pour chaque partie : couleur du texte, surlignement (fond), taille, gras, italique et souligné.
-        Les titres de section apparaissent automatiquement ici.
-      </p>
-    </section>
+    </div><!-- /col-left -->
 
-    <section class="output-panels">
-      <div class="card">
-        <div class="panel-header">
-          <h2>HTML à copier</h2>
-          <button type="button" class="btn-primary" id="btnCopy">Copier le HTML</button>
+    <!-- ─ Colonne droite ─ -->
+    <div class="col-right">
+
+      <!-- HTML généré (haut) -->
+      <div class="output-pane">
+        <div class="pane-header">
+          <h2>HTML généré</h2>
+          <div style="display:flex;gap:.5rem;align-items:center;">
+            <label class="ctrl" style="font-size:.75rem;">
+              Fond aperçu
+              <input type="color" id="previewBgInput" value="#2b2b2b">
+            </label>
+          </div>
         </div>
-        <textarea id="htmlOutput" readonly></textarea>
+        <textarea id="htmlOutput" readonly spellcheck="false"></textarea>
       </div>
 
-      <div class="card">
-        <div class="panel-header">
-          <h2>Aperçu du rendu</h2>
-          <label class="ctrl">
-            Fond de simulation
-            <input type="color" id="previewBgInput" value="#2b2b2b">
-          </label>
+      <!-- Aperçu visuel (bas) -->
+      <div class="output-pane">
+        <div class="pane-header">
+          <h2>Aperçu visuel</h2>
         </div>
         <iframe id="previewFrame" title="Aperçu HTML"></iframe>
       </div>
-    </section>
-  </main>
 
-  <div class="toast" id="toast">HTML copié dans le presse-papiers !</div>
+    </div><!-- /col-right -->
 
+  </div><!-- /app-layout -->
+
+  <!-- ══ Toast ══ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══ Modale : ajout de champ ══ -->
   <div class="modal-overlay" id="addFieldModal">
     <div class="modal modal-section">
       <h3>Ajouter un champ</h3>
-      <p class="modal-desc">
-        Le champ sera ajouté à la fin de la section choisie. Utilisez ensuite les
-        flèches ▲ ▼ pour modifier son ordre d'affichage.
-      </p>
+      <p class="modal-desc">Le champ sera ajouté à la fin de la section choisie.</p>
 
       <div class="modal-field">
         <label for="fieldSection">Section de destination</label>
@@ -1003,13 +921,11 @@
     </div>
   </div>
 
+  <!-- ══ Modale : ajout de section ══ -->
   <div class="modal-overlay" id="addSectionModal">
     <div class="modal modal-section">
       <h3>Ajouter une section</h3>
-      <p class="modal-desc">
-        La section sera ajoutée à la suite des sections existantes. Seules les sections
-        ajoutées peuvent être rendues réductibles.
-      </p>
+      <p class="modal-desc">Les sections ajoutées peuvent être rendues réductibles.</p>
 
       <div class="modal-field">
         <label for="sectionTitle">Titre</label>
@@ -1026,26 +942,23 @@
 
       <div class="modal-panel">
         <p class="modal-panel-title">Options avancées</p>
-
         <label class="modal-check-row" for="sectionCollapsible">
           <input type="checkbox" id="sectionCollapsible">
           <span class="modal-check-row-text">
             <strong>Section réductible</strong>
-            <small>Le titre reste visible ; le contenu se replie sous un lien cliquable.</small>
+            <small>Le titre reste visible, le contenu se replie.</small>
           </span>
         </label>
-
         <div id="sectionCollapsibleOptions" class="modal-subpanel" hidden>
           <div class="modal-field">
             <label for="sectionSummary">Texte du lien d'ouverture</label>
             <input type="text" id="sectionSummary" placeholder="Saisir la valeur" />
           </div>
-
           <label class="modal-check-row" for="sectionOpenByDefault">
             <input type="checkbox" id="sectionOpenByDefault">
             <span class="modal-check-row-text">
               <strong>Ouverte par défaut</strong>
-              <small>Afficher le contenu dès le chargement, sans clic.</small>
+              <small>Afficher le contenu dès le chargement.</small>
             </span>
           </label>
         </div>
@@ -1058,423 +971,79 @@
     </div>
   </div>
 
+  <!-- ══ JavaScript ══ -->
   <script>
-    const STORAGE_KEY = "generateur-info-video-v20";
-    const APP_VERSION = "2.17";
-    const APP_BUILD = "20260708p";
+    const STORAGE_KEY    = "generateur-info-video-v21";
+    const APP_VERSION    = "3.0";
+    const APP_BUILD      = "20260711a";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
-    const DEFAULT_ALARM_IMG = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
+    const DEFAULT_ALARM_IMG    = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
-    const DEFAULT_LINK_TEXT = "CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !";
+    const DEFAULT_LINK_TEXT    = "CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !";
     const DEFAULT_FILE_LINK_TEXT = "OUVRIR LE DOCUMENT";
 
-    // Couleur de fond de simulation de l'aperçu (préférence locale, hors HTML copié)
     let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
 
-    // Couleurs par défaut de la mise en forme (réinitialisation et nouveaux profils)
     const DEFAULT_STYLE_COLORS = {
-      diversTitle: "#2E7D32",
-      link: "#D97B1C",
-      fileLink: "#1565C0",
+      diversTitle:    "#2E7D32",
+      link:           "#D97B1C",
+      fileLink:       "#1565C0",
       connexionTitle: "#2E86C1",
-      labels: "#000000",
-      notice: "#C62828",
-      summary: "#2E86C1",
-      bottomText: "#000000",
+      labels:         "#000000",
+      notice:         "#C62828",
+      summary:        "#2E86C1",
+      bottomText:     "#000000",
     };
 
-    // Couleurs de titre par défaut des sections d'origine (utilisées à la réinitialisation)
     const DEFAULT_TITLE_COLORS = {
-      sec_divers: DEFAULT_STYLE_COLORS.diversTitle,
+      sec_divers:    DEFAULT_STYLE_COLORS.diversTitle,
       sec_connexion: DEFAULT_STYLE_COLORS.connexionTitle,
     };
 
-    /** @type {{ url: string, sections: any[], styles: any }} */
+    /** @type {object} Document courant */
     let doc;
+    let simpleEditorMounted = false;
+
+    /* ── Utilitaires ── */
 
     function uid() {
       return "id_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     }
 
-    /**
-     * Crée une section avec ses propriétés par défaut.
-     * @param {object} [overrides] Propriétés à surcharger
-     * @returns {object} Section normalisée
-     */
-    function makeSection(overrides) {
-      return {
-        id: uid(),
-        title: "Section",
-        layout: "inline",
-        isDefault: false,
-        collapsible: false,
-        summaryText: DEFAULT_SUMMARY_TEXT,
-        openByDefault: false,
-        titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
-        fields: [],
-        ...(overrides || {}),
-      };
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
-    /**
-     * Active ou désactive les options de section réductible dans la modale.
-     */
-    function toggleSectionModalOptions() {
-      const enabled = document.getElementById("sectionCollapsible").checked;
-      document.getElementById("sectionCollapsibleOptions").hidden = !enabled;
-      if (!enabled) {
-        document.getElementById("sectionOpenByDefault").checked = false;
-      }
-    }
-
-    /**
-     * Libellé affiché pour un type de section.
-     * @param {string} layout Type de section
-     * @returns {string} Libellé court
-     */
-    function layoutLabel(layout) {
-      if (layout === "list") return "Liste";
-      return "Inline";
-    }
-
-    /**
-     * Construit la barre d'outils d'une section texte libre.
-     * @param {HTMLElement} editor Zone éditable
-     * @param {Function} onChange Callback après modification
-     * @returns {HTMLElement} Barre d'outils
-     */
-    function buildRichTextToolbar(editor, onChange) {
-      const toolbar = document.createElement("div");
-      toolbar.className = "richtext-toolbar";
-
-      /** @type {Range|null} Sélection mémorisée avant clic sur la barre d'outils */
-      let savedRange = null;
-
-      const saveEditorSelection = () => {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
-          savedRange = sel.getRangeAt(0).cloneRange();
-        }
-      };
-
-      const restoreEditorSelection = () => {
-        if (!savedRange) return false;
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedRange);
-        return true;
-      };
-
-      editor.addEventListener("keyup", saveEditorSelection);
-      editor.addEventListener("mouseup", saveEditorSelection);
-
-      const run = (cmd, value) => {
-        editor.focus();
-        restoreEditorSelection();
-        document.execCommand(cmd, false, value ?? null);
-        onChange();
-      };
-
-      const addBtn = (label, cmd, className, title) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "richtext-btn" + (className ? " " + className : "");
-        btn.textContent = label;
-        btn.title = title;
-        btn.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          saveEditorSelection();
-        });
-        btn.addEventListener("click", () => run(cmd));
-        toolbar.appendChild(btn);
-      };
-
-      addBtn("G", "bold", "", "Gras");
-      addBtn("I", "italic", "italic-btn", "Italique");
-      addBtn("S", "underline", "underline-btn", "Souligné");
-      addBtn("•", "insertUnorderedList", "", "Liste à puces");
-      addBtn("1.", "insertOrderedList", "", "Liste numérotée");
-
-      /**
-       * Applique une taille de police à la sélection courante.
-       * @param {string} sizeEm Taille en em
-       */
-      const applyFontSize = (sizeEm) => {
-        editor.focus();
-        restoreEditorSelection();
-        const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
-
-        const range = selection.getRangeAt(0);
-        const span = document.createElement("span");
-        span.style.fontSize = sizeEm;
-
-        try {
-          range.surroundContents(span);
-        } catch (_) {
-          const fragment = range.extractContents();
-          span.appendChild(fragment);
-          range.insertNode(span);
-        }
-
-        selection.removeAllRanges();
-        onChange();
-      };
-
-      const sizeWrap = document.createElement("span");
-      sizeWrap.className = "richtext-size-group";
-      const sizeLabel = document.createElement("span");
-      sizeLabel.className = "richtext-size-label";
-      sizeLabel.textContent = "Taille";
-      sizeWrap.appendChild(sizeLabel);
-
-      [
-        { value: "0.85em", label: "P", title: "Petit" },
-        { value: "1em", label: "N", title: "Normal" },
-        { value: "1.2em", label: "G", title: "Grand" },
-        { value: "1.5em", label: "TG", title: "Très grand" },
-        { value: "2em", label: "XG", title: "Énorme" },
-      ].forEach((opt) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "richtext-btn richtext-size-btn";
-        btn.textContent = opt.label;
-        btn.title = opt.title;
-        btn.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          saveEditorSelection();
-        });
-        btn.addEventListener("click", () => applyFontSize(opt.value));
-        sizeWrap.appendChild(btn);
-      });
-      toolbar.appendChild(sizeWrap);
-
-      const textColor = document.createElement("label");
-      textColor.className = "richtext-color";
-      textColor.title = "Couleur du texte";
-      textColor.appendChild(document.createTextNode("Couleur"));
-      const textColorInput = document.createElement("input");
-      textColorInput.type = "color";
-      textColorInput.value = "#000000";
-      textColorInput.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        saveEditorSelection();
-      });
-      textColorInput.addEventListener("input", (e) => run("foreColor", e.target.value));
-      textColor.appendChild(textColorInput);
-      toolbar.appendChild(textColor);
-
-      const bgColor = document.createElement("label");
-      bgColor.className = "richtext-color";
-      bgColor.title = "Surlignage";
-      bgColor.appendChild(document.createTextNode("Fond"));
-      const bgColorInput = document.createElement("input");
-      bgColorInput.type = "color";
-      bgColorInput.value = "#ffff00";
-      bgColorInput.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        saveEditorSelection();
-      });
-      bgColorInput.addEventListener("input", (e) => run("backColor", e.target.value));
-      bgColor.appendChild(bgColorInput);
-      toolbar.appendChild(bgColor);
-
-      const clearBtn = document.createElement("button");
-      clearBtn.type = "button";
-      clearBtn.className = "richtext-btn";
-      clearBtn.textContent = "Effacer style";
-      clearBtn.title = "Retirer la mise en forme de la sélection";
-      clearBtn.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        saveEditorSelection();
-      });
-      clearBtn.addEventListener("click", () => run("removeFormat"));
-      toolbar.appendChild(clearBtn);
-
-      return toolbar;
-    }
-
-    /**
-     * Crée l'éditeur de texte libre.
-     * @param {Function} getContent Lecture du contenu HTML
-     * @param {Function} setContent Enregistrement du contenu HTML
-     * @returns {HTMLElement} Conteneur complet
-     */
-    function buildRichTextEditor(getContent, setContent) {
-      const wrap = document.createElement("div");
-      wrap.className = "richtext-wrap";
-
-      const editor = document.createElement("div");
-      editor.className = "richtext-editor";
-      editor.contentEditable = "true";
-      editor.innerHTML = getContent() || "";
-
-      const sync = () => {
-        setContent(editor.innerHTML);
-        saveDoc();
-        updateOutput();
-      };
-
-      editor.addEventListener("input", sync);
-      editor.addEventListener("blur", sync);
-
-      wrap.appendChild(buildRichTextToolbar(editor, sync));
-      wrap.appendChild(editor);
-      return wrap;
-    }
-
-    /** @type {boolean} Éditeur remarque simple déjà monté */
-    let simpleEditorMounted = false;
-
-    /**
-     * Affiche ou masque les panneaux selon le mode actif.
-     */
-    function applyModeUI() {
-      const isSimple = doc.mode === "simple";
-      document.getElementById("videoModePanel").hidden = isSimple;
-      document.getElementById("simpleModePanel").hidden = !isSimple;
-      document.getElementById("stylesCard").hidden = isSimple;
-      document.getElementById("btnModeVideo").classList.toggle("active", !isSimple);
-      document.getElementById("btnModeSimple").classList.toggle("active", isSimple);
-      document.getElementById("headerDesc").textContent = isSimple
-        ? "Rédigez une remarque enrichie. Le HTML généré contient uniquement ce texte."
-        : "Créez vos sections, remplissez les champs, réglez la mise en forme et copiez le HTML généré.";
-    }
-
-    /**
-     * Monte l'éditeur du mode remarque simple.
-     */
-    function mountSimpleEditor() {
-      const host = document.getElementById("simpleEditorHost");
-      host.innerHTML = "";
-      host.appendChild(buildRichTextEditor(
-        () => doc.simpleContent,
-        (html) => { doc.simpleContent = html; }
-      ));
-      simpleEditorMounted = true;
-    }
-
-    /**
-     * Bascule entre les modes vidéo et remarque simple.
-     * @param {"video"|"simple"} mode Mode cible
-     */
-    function setMode(mode) {
-      doc.mode = mode === "simple" ? "simple" : "video";
-      if (doc.mode === "simple" && !simpleEditorMounted) {
-        mountSimpleEditor();
-      }
-      saveDoc();
-      applyModeUI();
-      updateOutput();
-    }
-
-    /**
-     * Crée un champ avec ses propriétés par défaut.
-     * @param {object} [overrides] Propriétés à surcharger
-     * @returns {object} Champ normalisé
-     */
-    function makeField(overrides) {
-      return {
-        id: uid(),
-        label: "",
-        value: "",
-        type: "normal",
-        multiline: false,
-        wrapAlarms: true,
-        alarmImageSrc: DEFAULT_ALARM_IMG,
-        ...(overrides || {}),
-      };
-    }
-
-    /**
-     * Déplace un champ vers le haut ou le bas dans sa section.
-     * @param {object} section Section contenant le champ
-     * @param {number} index Index actuel du champ
-     * @param {number} direction -1 pour monter, +1 pour descendre
-     */
-    function moveField(section, index, direction) {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= section.fields.length) return;
-      const [item] = section.fields.splice(index, 1);
-      section.fields.splice(newIndex, 0, item);
-      saveDoc();
-      renderSections();
-      updateOutput();
-    }
-
-    /**
-     * Déplace une section vers le haut ou le bas dans le document.
-     * @param {number} index Index actuel de la section
-     * @param {number} direction -1 pour monter, +1 pour descendre
-     */
-    function moveSection(index, direction) {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= doc.sections.length) return;
-      const [item] = doc.sections.splice(index, 1);
-      doc.sections.splice(newIndex, 0, item);
-      saveDoc();
-      renderSections();
-      renderStyleControls();
-      updateOutput();
-    }
-
-    /**
-     * Nettoie un libellé pour l'utiliser comme nom de fichier d'export.
-     * @param {string} name Texte saisi
-     * @returns {string} Nom de fichier sûr, ou chaîne vide
-     */
-    function sanitizeExportFileName(name) {
-      return String(name)
-        .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "")
-        .slice(0, 80);
-    }
-
-    /**
-     * Construit le nom de fichier pour l'export JSON.
-     * @returns {string} Nom de fichier proposé au téléchargement
-     */
-    function buildExportFileName() {
-      const site = sanitizeExportFileName(doc.siteName);
-      const date = new Date().toISOString().slice(0, 10);
-      if (site) return `${site}-remarques-${date}.json`;
-      return `generateur-remarques-${date}.json`;
-    }
-
-    /**
-     * Indique si une chaîne contient déjà du balisage HTML.
-     * @param {string} str Texte à analyser
-     * @returns {boolean} Vrai si du HTML est détecté
-     */
     function containsHtml(str) {
       return /<[a-z][\s\S]*>/i.test(str);
     }
 
-    /**
-     * Insère une balise image à la position du curseur dans un champ texte.
-     * @param {HTMLInputElement|HTMLTextAreaElement} input Champ cible
-     * @param {string} [src] Chemin de l'image
-     */
-    function insertImageTag(input, src) {
-      const imgTag = `<img src="${src || DEFAULT_ALARM_IMG}" width="24" height="24">`;
-      const start = input.selectionStart ?? input.value.length;
-      const end = input.selectionEnd ?? input.value.length;
-      input.value = input.value.slice(0, start) + imgTag + input.value.slice(end);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.focus();
-      const pos = start + imgTag.length;
-      input.setSelectionRange(pos, pos);
+    function showToast(message) {
+      const t = document.getElementById("toast");
+      t.textContent = message;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2400);
     }
 
+    /* ── Panneaux réductibles (col gauche) ── */
+
+    document.querySelectorAll(".panel-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const panel = btn.closest(".panel");
+        panel.classList.toggle("open");
+      });
+    });
+
+    /* ── Modèle de données ── */
+
     /**
-     * Crée une configuration de style complète en fusionnant avec les valeurs par défaut.
+     * Crée une configuration de style.
      * @param {object} [overrides] Propriétés à surcharger
-     * @returns {object} Configuration de style
+     * @returns {object} Style normalisé
      */
     function makeStyle(overrides) {
       return {
@@ -1486,39 +1055,59 @@
     }
 
     /**
-     * Construit le document par défaut (sections d'origine + styles).
+     * Crée un champ avec ses propriétés par défaut.
+     * @param {object} [overrides] Propriétés à surcharger
+     * @returns {object} Champ normalisé
+     */
+    function makeField(overrides) {
+      return {
+        id: uid(), label: "", value: "", type: "normal",
+        multiline: false, wrapAlarms: true, alarmImageSrc: DEFAULT_ALARM_IMG,
+        ...(overrides || {}),
+      };
+    }
+
+    /**
+     * Crée une section avec ses propriétés par défaut.
+     * @param {object} [overrides] Propriétés à surcharger
+     * @returns {object} Section normalisée
+     */
+    function makeSection(overrides) {
+      return {
+        id: uid(), title: "Section", layout: "inline",
+        isDefault: false, collapsible: false,
+        summaryText: DEFAULT_SUMMARY_TEXT, openByDefault: false,
+        titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
+        fields: [],
+        ...(overrides || {}),
+      };
+    }
+
+    /**
+     * Construit le document par défaut.
      * @returns {object} Document initial
      */
     function defaultDoc() {
       return {
-        mode: "video",
-        siteName: "",
-        url: "",
+        mode: "video", siteName: "", url: "",
         linkText: DEFAULT_LINK_TEXT,
-        fileUrl: "",
-        fileLinkText: DEFAULT_FILE_LINK_TEXT,
-        includeVideoLink: true,
-        includeFileLink: false,
-        includeFooterHelp: true,
-        simpleContent: "",
-        spacing: 0,
+        fileUrl: "", fileLinkText: DEFAULT_FILE_LINK_TEXT,
+        includeVideoLink: true, includeFileLink: false, includeFooterHelp: true,
+        simpleContent: "", spacing: 0,
         sections: [
           makeSection({
-            id: "sec_divers", title: "Informations diverses", layout: "inline", isDefault: true,
+            id: "sec_divers", title: "Informations diverses",
+            layout: "inline", isDefault: true,
             titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.diversTitle, size: 1.2 }),
             fields: [
               makeField({ label: "Code Inter", value: "" }),
-              makeField({
-                label: "Consigne importante",
-                value: "",
-                type: "notice",
-                wrapAlarms: true,
-              }),
+              makeField({ label: "Consigne importante", value: "", type: "notice", wrapAlarms: true }),
               makeField({ label: "Info.", value: "", multiline: true }),
             ],
           }),
           makeSection({
-            id: "sec_connexion", title: "Information de connexion vidéo", layout: "list", isDefault: true,
+            id: "sec_connexion", title: "Information de connexion vidéo",
+            layout: "list", isDefault: true,
             titleStyle: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 }),
             fields: [
               makeField({ label: "Adresse IP", value: "" }),
@@ -1530,62 +1119,53 @@
           }),
         ],
         styles: {
-          link: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true }),
-          fileLink: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
-          labels: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
-          notice: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
-          summary: makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false }),
+          link:       makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true }),
+          fileLink:   makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
+          labels:     makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
+          notice:     makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
+          summary:    makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false }),
           bottomText: makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 }),
         },
       };
     }
 
     /**
-     * Normalise un document chargé pour garantir la présence de toutes les propriétés.
+     * Normalise un document chargé.
      * @param {object} d Document brut
      * @returns {object} Document normalisé
      */
     function normalizeDoc(d) {
       const out = {
         mode: d.mode === "simple" ? "simple" : "video",
-        siteName: d.siteName || "",
-        url: d.url || "",
+        siteName: d.siteName || "", url: d.url || "",
         linkText: d.linkText || DEFAULT_LINK_TEXT,
-        fileUrl: d.fileUrl || "",
-        fileLinkText: d.fileLinkText || DEFAULT_FILE_LINK_TEXT,
+        fileUrl: d.fileUrl || "", fileLinkText: d.fileLinkText || DEFAULT_FILE_LINK_TEXT,
         includeVideoLink: d.includeVideoLink !== false,
         includeFileLink: !!d.includeFileLink,
         includeFooterHelp: d.includeFooterHelp !== false,
-        simpleContent: d.simpleContent || "",
-        spacing: 0,
-        sections: [],
-        styles: {},
+        simpleContent: d.simpleContent || "", spacing: 0,
+        sections: [], styles: {},
       };
 
       const rawSections = (d.sections || []).filter((s) => s.layout !== "richtext");
       const legacyRich = (d.sections || []).find((s) => s.layout === "richtext");
-      if (!out.simpleContent && legacyRich?.content) {
-        out.simpleContent = legacyRich.content;
-      }
+      if (!out.simpleContent && legacyRich?.content) out.simpleContent = legacyRich.content;
 
       out.sections = rawSections.map((s) => {
-        let rawFields = [...(s.fields || [])];
-        if (rawFields.some((f) => typeof f.position === "number")) {
-          rawFields.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+        let fields = [...(s.fields || [])];
+        if (fields.some((f) => typeof f.position === "number")) {
+          fields.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
         }
         return {
-          id: s.id || uid(),
-          title: s.title || "Section",
+          id: s.id || uid(), title: s.title || "Section",
           layout: s.layout === "list" ? "list" : "inline",
           isDefault: !!s.isDefault,
           collapsible: s.isDefault ? false : !!s.collapsible,
           summaryText: s.summaryText || DEFAULT_SUMMARY_TEXT,
           openByDefault: s.isDefault ? false : !!s.openByDefault,
           titleStyle: makeStyle(s.titleStyle || {}),
-          fields: rawFields.map((f) => ({
-            id: f.id || uid(),
-            label: f.label || "",
-            value: f.value || "",
+          fields: fields.map((f) => ({
+            id: f.id || uid(), label: f.label || "", value: f.value || "",
             type: f.type === "notice" ? "notice" : "normal",
             multiline: !!(f.multiline || (/^info\.?$/i.test(f.label || "") && f.type !== "notice")),
             wrapAlarms: f.wrapAlarms !== false,
@@ -1593,31 +1173,23 @@
           })),
         };
       });
+
       const st = d.styles || {};
       out.styles = {
-        link: makeStyle(st.link || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2 }),
-        fileLink: makeStyle(st.fileLink || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
-        labels: makeStyle(st.labels || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
-        notice: makeStyle(st.notice || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
-        summary: makeStyle(st.summary || { size: 1, bold: false, underline: false }),
+        link:       makeStyle(st.link       || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2 }),
+        fileLink:   makeStyle(st.fileLink   || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
+        labels:     makeStyle(st.labels     || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
+        notice:     makeStyle(st.notice     || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
+        summary:    makeStyle(st.summary    || { size: 1, bold: false, underline: false }),
         bottomText: makeStyle(st.bottomText || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 }),
       };
 
-      // Migration : ajoute la consigne importante dans la section d'origine si absente
+      // Migration : ajoute la consigne si absente dans la section d'origine
       const divers = out.sections.find((s) => s.id === "sec_divers");
       if (divers && !divers.fields.some((f) => f.type === "notice")) {
         const codeIdx = divers.fields.findIndex((f) => /code inter/i.test(f.label));
-        const noticeField = makeField({
-          label: "Consigne importante",
-          value: "",
-          type: "notice",
-          wrapAlarms: true,
-        });
-        if (codeIdx !== -1) {
-          divers.fields.splice(codeIdx + 1, 0, noticeField);
-        } else {
-          divers.fields.unshift(noticeField);
-        }
+        const nf = makeField({ label: "Consigne importante", value: "", type: "notice", wrapAlarms: true });
+        codeIdx !== -1 ? divers.fields.splice(codeIdx + 1, 0, nf) : divers.fields.unshift(nf);
       }
 
       return out;
@@ -1625,9 +1197,7 @@
 
     function loadDoc() {
       let saved = null;
-      try {
-        saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      } catch (_) { /* ignore */ }
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (_) { /* noop */ }
       doc = saved && saved.sections ? normalizeDoc(saved) : defaultDoc();
     }
 
@@ -1635,389 +1205,176 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(doc));
     }
 
-    function escapeHtml(text) {
-      return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
+    /* ── Génération HTML ── */
 
-    /**
-     * Construit la chaîne CSS inline correspondant à une configuration de style.
-     * @param {object} s Configuration de style
-     * @returns {string} Valeur de l'attribut style
-     */
     function inlineStyle(s) {
       const css = [];
       if (s.colorOn) css.push(`color: ${s.colorValue}`);
-      if (s.bgOn) css.push(`background-color: ${s.bgValue}`);
+      if (s.bgOn)    css.push(`background-color: ${s.bgValue}`);
       css.push(`font-size: ${s.size}em`);
       css.push(`font-weight: ${s.bold ? "bold" : "normal"}`);
-      if (s.italic) css.push("font-style: italic");
+      if (s.italic)   css.push("font-style: italic");
       css.push(`text-decoration: ${s.underline ? "underline" : "none"}`);
       return css.join("; ");
     }
 
-    /**
-     * Enveloppe un texte déjà échappé dans un span stylé.
-     * @param {string} text Texte échappé
-     * @param {object} s Configuration de style
-     * @returns {string} HTML du span
-     */
     function styledSpan(text, s) {
       return `<span style="${inlineStyle(s)}">${text}</span>`;
     }
 
-    /**
-     * Indique si l'espacement demandé correspond au mode compact (lignes collées).
-     * @returns {boolean} Vrai lorsque l'espacement est nul ou quasi nul
-     */
-    function isTightSpacing() {
-      return doc.spacing <= 0;
+    const isTight = () => doc.spacing <= 0;
+
+    function auxStyle() {
+      return "margin: 0; padding: 0" + (isTight() ? "; line-height: 1.15" : "");
     }
 
-    /**
-     * Fusionne les sauts de ligne et balises &lt;br&gt; consécutifs en un seul.
-     * @param {string} text Texte ou fragment HTML
-     * @returns {string} Texte normalisé
-     */
-    function collapseLineBreaks(text) {
+    function collapseBreaks(text) {
       return String(text)
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
+        .replace(/\r\n/g, "\n").replace(/\r/g, "\n")
         .replace(/\n[ \t]*\n+/g, "\n")
         .replace(/(?:<br\s*\/?>\s*){2,}/gi, "<br>")
         .replace(/^\n+|\n+$/g, "");
     }
 
-    /**
-     * Renvoie les styles inline d'un bloc (marge, reset padding, interligne en mode compact).
-     * Les styles inline priment sur les classes CSS du logiciel de destination.
-     * @param {{ noBottom?: boolean }} [opts] noBottom : supprime la marge basse du bloc
-     * @returns {string} Déclaration CSS inline
-     */
-    function blockStyle(opts = {}) {
-      const bottom = opts.noBottom || isTightSpacing() ? 0 : doc.spacing;
-      const parts = [`margin: 0 0 ${bottom}em 0`, "padding: 0"];
-      if (isTightSpacing()) {
-        parts.push("line-height: 1.15");
-      }
-      return parts.join("; ");
-    }
-
-    /**
-     * Rend le contenu d'une valeur de champ (texte simple ou HTML déjà saisi).
-     * @param {object} field Champ source
-     * @returns {string} Fragment HTML
-     */
     function renderFieldValue(field) {
-      if (containsHtml(field.value)) return collapseLineBreaks(field.value);
-      const text = escapeHtml(collapseLineBreaks(field.value));
-      if (field.multiline) {
-        return text.split("\n").join("<br>");
-      }
-      return text;
+      if (containsHtml(field.value)) return collapseBreaks(field.value);
+      const text = escapeHtml(collapseBreaks(field.value));
+      return field.multiline ? text.split("\n").join("<br>") : text;
     }
 
-    /**
-     * Génère le HTML d'une consigne importante.
-     * @param {object} field Champ de type notice
-     * @returns {string} HTML du bandeau
-     */
     function renderNoticeHtml(field) {
-      const imgSrc = field.alarmImageSrc || DEFAULT_ALARM_IMG;
-      const img = `<img src="${escapeHtml(imgSrc)}" width="24" height="24">`;
+      const img = `<img src="${escapeHtml(field.alarmImageSrc || DEFAULT_ALARM_IMG)}" width="24" height="24">`;
       let inner;
-      if (containsHtml(field.value)) {
-        inner = field.value;
-      } else if (field.wrapAlarms) {
-        inner = `${img} ${escapeHtml(field.value)} ${img}`;
-      } else {
-        inner = escapeHtml(field.value);
-      }
+      if (containsHtml(field.value))    inner = field.value;
+      else if (field.wrapAlarms)         inner = `${img} ${escapeHtml(field.value)} ${img}`;
+      else                               inner = escapeHtml(field.value);
       return `<strong style="${inlineStyle(doc.styles.notice)}"> ${inner} </strong>`;
     }
 
-    /**
-     * Génère le HTML d'un champ classique.
-     * @param {object} field Champ normal
-     * @returns {string} Fragment HTML
-     */
-    function renderNormalFieldHtml(field) {
+    function renderFieldHtml(field) {
+      if (field.type === "notice") return renderNoticeHtml(field);
       return `${styledSpan(escapeHtml(field.label) + " :", doc.styles.labels)} ${renderFieldValue(field)}`;
     }
 
-    /**
-     * Génère le HTML d'un champ selon son type.
-     * @param {object} field Champ à rendre
-     * @returns {string} Fragment HTML
-     */
-    function renderFieldHtml(field) {
-      if (field.type === "notice") return renderNoticeHtml(field);
-      return renderNormalFieldHtml(field);
-    }
-
-    /**
-     * Renvoie les styles du conteneur englobant une section entière.
-     * @param {{ afterFooter?: boolean }} [opts] afterFooter : section située après le texte d'aide
-     * @returns {string} Déclaration CSS inline
-     */
-    function sectionOuterStyle(opts = {}) {
-      const parts = ["margin: 0", "padding: 0", "color: #000000"];
-      if (isTightSpacing()) {
-        parts.push("line-height: 1.15");
-      } else {
-        if (opts.afterFooter) parts.push(`margin-top: ${doc.spacing}em`);
-        parts.push(`margin-bottom: ${doc.spacing}em`);
+    function renderSectionBodyHtml(section, items) {
+      if (section.layout === "list") {
+        if (isTight()) return items.map((f) => `• ${renderFieldHtml(f)}`).join("<br>\n");
+        const lis = items.map((f) => `    <li style="margin: 0 0 ${doc.spacing}em 0; padding: 0; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`);
+        return `<ul style="color: #000000; margin: 0; padding: 0; list-style: disc inside;">\n${lis.join("\n")}\n</ul>`;
       }
-      return parts.join("; ");
+      if (isTight()) return items.map((f) => renderFieldHtml(f)).join("<br>\n");
+      const divs = items.map((f, i) => `    <div style="margin: 0 0 ${i === items.length - 1 ? 0 : doc.spacing}em 0; padding: 0;">${renderFieldHtml(f)}</div>`);
+      return `<div style="color: #000000; margin: 0; padding: 0;">\n${divs.join("\n")}\n</div>`;
     }
 
-    /**
-     * Styles compacts pour les blocs auxiliaires (lien vidéo, texte d'aide).
-     * @returns {string} Déclaration CSS inline
-     */
-    function auxBlockStyle() {
-      const parts = ["margin: 0", "padding: 0"];
-      if (isTightSpacing()) parts.push("line-height: 1.15");
-      return parts.join("; ");
-    }
-
-    /**
-     * Index de la section « informations diverses » dans le document.
-     * @returns {number} Indice de section, ou -1 si absente
-     */
-    function getDiversSectionIndex() {
-      const byId = doc.sections.findIndex((s) => s.id === "sec_divers");
-      if (byId >= 0) return byId;
-      return doc.sections.findIndex((s) => s.isDefault && s.layout === "inline");
-    }
-
-    /**
-     * Index de la section « connexion vidéo » dans le document.
-     * @returns {number} Indice de section, ou -1 si absente
-     */
-    function getConnexionSectionIndex() {
-      const byId = doc.sections.findIndex((s) => s.id === "sec_connexion");
-      if (byId >= 0) return byId;
-      return doc.sections.findIndex((s) => s.isDefault && s.layout === "list");
-    }
-
-    /**
-     * Index de la section après laquelle insérer le texte d'aide (connexion vidéo en priorité).
-     * @returns {number} Indice de section, ou -1 si aucune section cible
-     */
-    function getFooterInsertAfterIndex() {
-      const connexionIdx = doc.sections.findIndex((s) => s.id === "sec_connexion");
-      if (connexionIdx >= 0) return connexionIdx;
-      let lastDefaultIdx = -1;
-      doc.sections.forEach((section, idx) => {
-        if (section.isDefault) lastDefaultIdx = idx;
-      });
-      return lastDefaultIdx;
-    }
-
-    /**
-     * Fragment HTML du lien vidéo (sans conteneur bloc).
-     * @param {string} url URL de la vidéo
-     * @returns {string} HTML du lien
-     */
-    function linkHtmlFragment(url) {
-      const text = escapeHtml(doc.linkText || DEFAULT_LINK_TEXT);
-      return `<a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${text}</a>`;
-    }
-
-    /**
-     * Fragment HTML du lien fichier (PDF, etc.) — ouverture dans l'application par défaut du navigateur.
-     * @param {string} fileUrl URL ou chemin du fichier sur le serveur
-     * @returns {string} HTML du lien
-     */
-    function fileLinkHtmlFragment(fileUrl) {
-      const text = escapeHtml(doc.fileLinkText || DEFAULT_FILE_LINK_TEXT);
-      return `<a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener noreferrer" style="${inlineStyle(doc.styles.fileLink)}">${text}</a>`;
-    }
-
-    /**
-     * Fragment HTML du texte d'aide (sans conteneur bloc, précédé d'un saut de ligne).
-     * @param {string} url URL affichée en bas
-     * @returns {string} HTML du pied de page
-     */
-    function footerHtmlFragment(url) {
-      const helpText = styledSpan(
-        "Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :",
-        doc.styles.bottomText
-      );
-      return `<br>\n${helpText}<br>\n${escapeHtml(url)}`;
-    }
-
-    /**
-     * Génère le HTML du titre d'une section.
-     * @param {object} section Section source
-     * @returns {string} Fragment HTML du titre
-     */
     function renderSectionTitleHtml(section) {
       return styledSpan(escapeHtml(section.title) + " :", section.titleStyle);
     }
 
-    /**
-     * Génère le corps HTML d'une section (champs renseignés).
-     * @param {object} section Section source
-     * @param {object[]} items Champs à afficher
-     * @param {boolean} [insideDetails] Vrai si le contenu est dans un bloc details
-     * @param {boolean} [afterTitle] Vrai si le corps suit immédiatement le titre (pas de marge haute)
-     * @returns {string} HTML du contenu
-     */
-    function renderSectionBodyHtml(section, items, insideDetails, afterTitle) {
-      const baseWrapper = "color: #000000; margin: 0; padding: 0";
-      const wrapperStyle = insideDetails
-        ? baseWrapper + (isTightSpacing() ? "; line-height: 1.15" : "")
-        : afterTitle
-          ? baseWrapper
-          : baseWrapper + (isTightSpacing() ? "" : `; margin-bottom: ${doc.spacing}em`);
-
-      if (section.layout === "list") {
-        if (isTightSpacing()) {
-          return items.map((f) => `• ${renderFieldHtml(f)}`).join("<br>\n");
-        }
-        const lis = items.map((f, i) => {
-          const noBottom = i === items.length - 1;
-          return `    <li style="${blockStyle({ noBottom })}; list-style-type: disc; list-style-position: inside;">${renderFieldHtml(f)}</li>`;
-        });
-        const listStyle = `${wrapperStyle}; list-style: disc inside; margin: 0; padding: 0`;
-        return `<ul style="${listStyle};">\n${lis.join("\n")}\n</ul>`;
-      }
-
-      if (isTightSpacing()) {
-        const lines = items.map((f) => renderFieldHtml(f));
-        return lines.join("<br>\n");
-      }
-
-      const divs = items.map((f, i) => {
-        const noBottom = i === items.length - 1;
-        return `    <div style="${blockStyle({ noBottom })};">${renderFieldHtml(f)}</div>`;
-      });
-      return `<div style="${wrapperStyle};">\n${divs.join("\n")}\n</div>`;
+    function sectionOuterStyle(afterFooter) {
+      const base = "margin: 0; padding: 0; color: #000000";
+      if (isTight()) return base + "; line-height: 1.15";
+      const top = afterFooter ? `; margin-top: ${doc.spacing}em` : "";
+      return base + top + `; margin-bottom: ${doc.spacing}em`;
     }
 
-    /**
-     * Génère le HTML d'une section (titre + champs renseignés uniquement).
-     * @param {object} section Section à rendre
-     * @param {{ afterFooter?: boolean, prependLinkHtml?: string, appendFooterHtml?: string }} [opts] Options de rendu
-     * @returns {string} HTML de la section
-     */
     function renderSectionHtml(section, opts = {}) {
-      const outerStyle = sectionOuterStyle({ afterFooter: !!opts.afterFooter });
+      const outer = sectionOuterStyle(!!opts.afterFooter);
       const items = section.fields.filter((f) => f.value.trim() !== "");
       const hasBody = items.length > 0;
       const prepend = opts.prependLinkHtml ? `${opts.prependLinkHtml}<br>\n` : "";
-      const append = `${opts.appendFooterHtml || ""}${opts.appendExtraHtml || ""}`;
+      const append  = `${opts.appendFooterHtml || ""}${opts.appendExtraHtml || ""}`;
 
       if (!section.collapsible) {
-        if (isTightSpacing()) {
+        if (isTight()) {
           const titlePart = renderSectionTitleHtml(section);
-          if (!hasBody && !prepend && !append) {
-            return `<div style="${outerStyle};">${titlePart}</div>`;
-          }
+          if (!hasBody && !prepend && !append) return `<div style="${outer};">${titlePart}</div>`;
           let inner = prepend;
-          if (hasBody) {
-            const bodyPart = renderSectionBodyHtml(section, items, false, true);
-            inner += `${titlePart}<br>\n${bodyPart}`;
-          } else {
-            inner += titlePart;
-          }
+          inner += hasBody ? `${titlePart}<br>\n${renderSectionBodyHtml(section, items)}` : titlePart;
           inner += append;
-          return `<div style="${outerStyle};">${inner}\n</div>`;
+          return `<div style="${outer};">${inner}\n</div>`;
         }
-
-        const titleHtml = `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
-        if (!hasBody) return `<div style="${outerStyle};">${titleHtml}</div>`;
-        return `<div style="${outerStyle};">${titleHtml}\n${renderSectionBodyHtml(section, items, false, true)}</div>`;
+        const titleHtml = `<div style="margin: 0; padding: 0;">${renderSectionTitleHtml(section)}</div>`;
+        if (!hasBody) return `<div style="${outer};">${titleHtml}</div>`;
+        return `<div style="${outer};">${titleHtml}\n${renderSectionBodyHtml(section, items)}</div>`;
       }
 
-      const titlePart = isTightSpacing()
+      const titlePart = isTight()
         ? renderSectionTitleHtml(section)
-        : `<div style="${blockStyle({ noBottom: true })};">${renderSectionTitleHtml(section)}</div>`;
-      if (!hasBody) {
-        return `<div style="${outerStyle};">${titlePart}</div>`;
-      }
+        : `<div style="margin: 0; padding: 0;">${renderSectionTitleHtml(section)}</div>`;
+      if (!hasBody) return `<div style="${outer};">${titlePart}</div>`;
 
-      const openAttr = section.openByDefault ? " open" : "";
-      const summaryText = escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT);
       const summaryStyle = `${inlineStyle(doc.styles.summary)}; cursor: pointer; margin: 0; padding: 0`;
-      const detailsBlock = `<details${openAttr} style="${blockStyle({ noBottom: isTightSpacing() })};">\n    <summary style="${summaryStyle}">${summaryText}</summary>\n${renderSectionBodyHtml(section, items, true, true)}\n</details>`;
-      const separator = isTightSpacing() ? "" : "\n";
-      return `<div style="${outerStyle};">${titlePart}${separator}${detailsBlock}</div>`;
+      const openAttr = section.openByDefault ? " open" : "";
+      const detailsBlock = `<details${openAttr} style="margin: 0; padding: 0;">\n    <summary style="${summaryStyle}">${escapeHtml(section.summaryText || DEFAULT_SUMMARY_TEXT)}</summary>\n${renderSectionBodyHtml(section, items)}\n</details>`;
+      return `<div style="${outer};">${titlePart}${isTight() ? "" : "\n"}${detailsBlock}</div>`;
     }
 
-    function fileLinkHtml(fileUrl) {
-      return `<div style="${auxBlockStyle()};">${fileLinkHtmlFragment(fileUrl)}</div>`;
+    function linkHtmlFragment(url) {
+      return `<a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${escapeHtml(doc.linkText || DEFAULT_LINK_TEXT)}</a>`;
     }
 
-    function linkHtml(url) {
-      return `<div style="${auxBlockStyle()};">${linkHtmlFragment(url)}</div>`;
+    function fileLinkHtmlFragment(fileUrl) {
+      return `<a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener noreferrer" style="${inlineStyle(doc.styles.fileLink)}">${escapeHtml(doc.fileLinkText || DEFAULT_FILE_LINK_TEXT)}</a>`;
     }
 
-    function footerHtml(url) {
-      const style = auxBlockStyle();
-      if (isTightSpacing()) {
-        return `<div style="${style};">${footerHtmlFragment(url).replace(/^<br>\n/, "")}</div>`;
-      }
-      const helpText = styledSpan(
-        "Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :",
-        doc.styles.bottomText
-      );
-      return `<div style="${style};">${helpText}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`;
+    function footerHtmlFragment(url) {
+      const helpText = styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText);
+      return `<br>\n${helpText}<br>\n${escapeHtml(url)}`;
     }
+
+    function getDiversIdx()    { return doc.sections.findIndex((s) => s.id === "sec_divers") ?? doc.sections.findIndex((s) => s.isDefault && s.layout === "inline"); }
+    function getConnexionIdx() { const i = doc.sections.findIndex((s) => s.id === "sec_connexion"); return i >= 0 ? i : doc.sections.findIndex((s) => s.isDefault && s.layout === "list"); }
+    function getFooterIdx()    { const i = doc.sections.findIndex((s) => s.id === "sec_connexion"); if (i >= 0) return i; let last = -1; doc.sections.forEach((s, idx) => { if (s.isDefault) last = idx; }); return last; }
 
     function buildHtml() {
-      if (doc.mode === "simple") {
-        return (doc.simpleContent || "").trim();
-      }
+      if (doc.mode === "simple") return (doc.simpleContent || "").trim();
 
       const url = doc.url;
       const parts = [];
-      let linkRendered = false;
-      let footerRendered = false;
-      const connexionIdx = getConnexionSectionIndex();
-      const diversIdx = getDiversSectionIndex();
-      const footerAfterIdx = getFooterInsertAfterIndex();
-      const groupConnexionBlock = isTightSpacing() && connexionIdx >= 0;
+      let linkRendered = false, footerRendered = false;
+      const connexionIdx = getConnexionIdx();
+      const diversIdx    = getDiversIdx();
+      const footerIdx    = getFooterIdx();
+      const groupBlock   = isTight() && connexionIdx >= 0;
 
       doc.sections.forEach((section, idx) => {
         const isConnexion = idx === connexionIdx;
-        const isDivers = idx === diversIdx;
+        const isDivers    = idx === diversIdx;
         const opts = { afterFooter: footerRendered };
 
         if (isDivers && doc.includeFileLink && doc.fileUrl.trim()) {
           opts.appendExtraHtml = `<br>\n${fileLinkHtmlFragment(doc.fileUrl.trim())}`;
         }
-
-        if (groupConnexionBlock && isConnexion) {
-          if (doc.includeVideoLink) {
-            opts.prependLinkHtml = linkHtmlFragment(url);
-            linkRendered = true;
-          }
-          if (doc.includeFooterHelp && idx === footerAfterIdx) {
-            opts.appendFooterHtml = footerHtmlFragment(url);
-            footerRendered = true;
-          }
+        if (groupBlock && isConnexion) {
+          if (doc.includeVideoLink) { opts.prependLinkHtml = linkHtmlFragment(url); linkRendered = true; }
+          if (doc.includeFooterHelp && idx === footerIdx) { opts.appendFooterHtml = footerHtmlFragment(url); footerRendered = true; }
         } else if (doc.includeVideoLink && isConnexion) {
-          parts.push(linkHtml(url));
+          parts.push(`<div style="${auxStyle()};">${linkHtmlFragment(url)}</div>`);
           linkRendered = true;
         }
 
-        const sectionHtml = renderSectionHtml(section, opts);
-        if (sectionHtml) parts.push(sectionHtml);
+        const html = renderSectionHtml(section, opts);
+        if (html) parts.push(html);
 
-        if (doc.includeFooterHelp && !footerRendered && idx === footerAfterIdx) {
-          parts.push(footerHtml(url));
+        if (doc.includeFooterHelp && !footerRendered && idx === footerIdx) {
+          const s = auxStyle();
+          parts.push(isTight()
+            ? `<div style="${s};">${footerHtmlFragment(url).replace(/^<br>\n/, "")}</div>`
+            : `<div style="${s};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`
+          );
           footerRendered = true;
         }
       });
 
-      if (doc.includeVideoLink && !linkRendered) parts.push(linkHtml(url));
-      if (doc.includeFooterHelp && !footerRendered) parts.push(footerHtml(url));
+      if (doc.includeVideoLink && !linkRendered)  parts.push(`<div style="${auxStyle()};">${linkHtmlFragment(url)}</div>`);
+      if (doc.includeFooterHelp && !footerRendered) {
+        const s = auxStyle();
+        parts.push(isTight()
+          ? `<div style="${s};">${footerHtmlFragment(url).replace(/^<br>\n/, "")}</div>`
+          : `<div style="${s};">${styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText)}</div>\n<div style="margin: 0; padding: 0;">${escapeHtml(url)}</div>`
+        );
+      }
 
       return parts.join("\n");
     }
@@ -2025,13 +1382,41 @@
     function updateOutput() {
       const html = buildHtml();
       document.getElementById("htmlOutput").value = html;
-
       const frame = document.getElementById("previewFrame");
-      const previewDoc = frame.contentDocument || frame.contentWindow.document;
-      previewDoc.open();
-      // Le fond n'est qu'une simulation locale : il n'est pas inclus dans le HTML copié
-      previewDoc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Segoe UI,sans-serif;padding:12px;margin:0;background:${previewBg};">${html}</body></html>`);
-      previewDoc.close();
+      const pd = frame.contentDocument || frame.contentWindow.document;
+      pd.open();
+      pd.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Segoe UI,sans-serif;padding:14px;margin:0;background:${previewBg};">${html}</body></html>`);
+      pd.close();
+    }
+
+    /* ── Rendu des sections (col gauche) ── */
+
+    function layoutLabel(layout) { return layout === "list" ? "Liste" : "Inline"; }
+
+    function moveField(section, index, dir) {
+      const ni = index + dir;
+      if (ni < 0 || ni >= section.fields.length) return;
+      const [item] = section.fields.splice(index, 1);
+      section.fields.splice(ni, 0, item);
+      saveDoc(); renderSections(); updateOutput();
+    }
+
+    function moveSection(index, dir) {
+      const ni = index + dir;
+      if (ni < 0 || ni >= doc.sections.length) return;
+      const [item] = doc.sections.splice(index, 1);
+      doc.sections.splice(ni, 0, item);
+      saveDoc(); renderSections(); renderStyleControls(); updateOutput();
+    }
+
+    function insertImageTag(input, src) {
+      const tag = `<img src="${src || DEFAULT_ALARM_IMG}" width="24" height="24">`;
+      const s = input.selectionStart ?? input.value.length;
+      const e = input.selectionEnd ?? input.value.length;
+      input.value = input.value.slice(0, s) + tag + input.value.slice(e);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.focus();
+      input.setSelectionRange(s + tag.length, s + tag.length);
     }
 
     function renderSections() {
@@ -2040,123 +1425,101 @@
 
       doc.sections.forEach((section, sIdx) => {
         const block = document.createElement("div");
-        block.className = "section-block";
+        block.className = "section-block open";
 
+        /* ─ En-tête de section ─ */
         const head = document.createElement("div");
         head.className = "section-head";
 
-        const sectionMoveBtns = document.createElement("div");
-        sectionMoveBtns.className = "section-move-btns";
+        const chevron = document.createElement("span");
+        chevron.className = "section-chevron";
+        chevron.textContent = "▶";
 
-        const sectionUpBtn = document.createElement("button");
-        sectionUpBtn.type = "button";
-        sectionUpBtn.className = "btn-move";
-        sectionUpBtn.textContent = "▲";
-        sectionUpBtn.title = "Monter la section";
-        sectionUpBtn.disabled = sIdx === 0;
-        sectionUpBtn.addEventListener("click", () => moveSection(sIdx, -1));
-
-        const sectionDownBtn = document.createElement("button");
-        sectionDownBtn.type = "button";
-        sectionDownBtn.className = "btn-move";
-        sectionDownBtn.textContent = "▼";
-        sectionDownBtn.title = "Descendre la section";
-        sectionDownBtn.disabled = sIdx === doc.sections.length - 1;
-        sectionDownBtn.addEventListener("click", () => moveSection(sIdx, 1));
-
-        sectionMoveBtns.appendChild(sectionUpBtn);
-        sectionMoveBtns.appendChild(sectionDownBtn);
+        const moveBtns = document.createElement("div");
+        moveBtns.className = "section-move-btns";
+        const upBtn = document.createElement("button");
+        upBtn.type = "button"; upBtn.className = "btn-move"; upBtn.textContent = "▲";
+        upBtn.title = "Monter la section"; upBtn.disabled = sIdx === 0;
+        upBtn.addEventListener("click", (e) => { e.stopPropagation(); moveSection(sIdx, -1); });
+        const downBtn = document.createElement("button");
+        downBtn.type = "button"; downBtn.className = "btn-move"; downBtn.textContent = "▼";
+        downBtn.title = "Descendre la section"; downBtn.disabled = sIdx === doc.sections.length - 1;
+        downBtn.addEventListener("click", (e) => { e.stopPropagation(); moveSection(sIdx, 1); });
+        moveBtns.appendChild(upBtn); moveBtns.appendChild(downBtn);
 
         const titleInput = document.createElement("input");
-        titleInput.type = "text";
-        titleInput.className = "section-title-input";
-        titleInput.value = section.title;
-        titleInput.placeholder = "Titre de la section";
+        titleInput.type = "text"; titleInput.className = "section-title-input";
+        titleInput.value = section.title; titleInput.placeholder = "Titre de la section";
+        titleInput.addEventListener("click", (e) => e.stopPropagation());
         titleInput.addEventListener("input", () => {
-          section.title = titleInput.value;
-          saveDoc();
-          updateOutput();
-          renderStyleControls();
+          section.title = titleInput.value; saveDoc(); updateOutput(); renderStyleControls();
         });
 
         const badge = document.createElement("span");
         badge.className = "type-badge " + section.layout;
         badge.textContent = layoutLabel(section.layout);
 
-        const delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "btn-danger";
-        delBtn.textContent = "✕ Section";
-        delBtn.title = "Supprimer cette section";
-        delBtn.addEventListener("click", () => {
-          if (!confirm(`Supprimer la section « ${section.title} » et tous ses champs ?`)) return;
-          doc.sections.splice(sIdx, 1);
-          saveDoc();
-          renderSections();
-          renderStyleControls();
-          updateOutput();
-        });
-
-        head.appendChild(sectionMoveBtns);
-        head.appendChild(titleInput);
-        head.appendChild(badge);
         if (section.collapsible) {
           const collBadge = document.createElement("span");
-          collBadge.className = "type-badge collapsible";
-          collBadge.textContent = "Réductible";
+          collBadge.className = "type-badge collapsible"; collBadge.textContent = "Réductible";
           head.appendChild(collBadge);
         }
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button"; delBtn.className = "btn-danger";
+        delBtn.textContent = "✕"; delBtn.title = "Supprimer cette section";
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!confirm(`Supprimer « ${section.title} » et tous ses champs ?`)) return;
+          doc.sections.splice(sIdx, 1);
+          saveDoc(); renderSections(); renderStyleControls(); updateOutput();
+        });
+
+        head.appendChild(chevron);
+        head.appendChild(moveBtns);
+        head.appendChild(titleInput);
+        head.appendChild(badge);
+        if (section.collapsible) { const b2 = document.createElement("span"); b2.className = "type-badge collapsible"; b2.textContent = "Réductible"; }
         head.appendChild(delBtn);
+
+        head.addEventListener("click", () => block.classList.toggle("open"));
         block.appendChild(head);
 
+        /* ─ Corps de section ─ */
+        const body = document.createElement("div");
+        body.className = "section-body";
+
         if (!section.isDefault) {
-          const sectionOpts = document.createElement("div");
-          sectionOpts.className = "section-options";
+          const opts = document.createElement("div");
+          opts.className = "section-options";
 
-          const collapsibleLabel = document.createElement("label");
-          collapsibleLabel.className = "ctrl";
-          const collapsibleCheck = document.createElement("input");
-          collapsibleCheck.type = "checkbox";
-          collapsibleCheck.checked = !!section.collapsible;
-          collapsibleCheck.addEventListener("change", () => {
-            section.collapsible = collapsibleCheck.checked;
-            saveDoc();
-            renderSections();
-            updateOutput();
+          const collLabel = document.createElement("label");
+          collLabel.className = "ctrl";
+          const collCheck = document.createElement("input");
+          collCheck.type = "checkbox"; collCheck.checked = !!section.collapsible;
+          collCheck.addEventListener("change", () => {
+            section.collapsible = collCheck.checked; saveDoc(); renderSections(); updateOutput();
           });
-          collapsibleLabel.appendChild(collapsibleCheck);
-          collapsibleLabel.appendChild(document.createTextNode(" Réductible"));
+          collLabel.appendChild(collCheck);
+          collLabel.appendChild(document.createTextNode(" Réductible"));
 
-          const summaryInput = document.createElement("input");
-          summaryInput.type = "text";
-          summaryInput.placeholder = DEFAULT_SUMMARY_TEXT;
-          summaryInput.value = section.summaryText || DEFAULT_SUMMARY_TEXT;
-          summaryInput.disabled = !section.collapsible;
-          summaryInput.title = "Texte affiché sur le lien d'ouverture";
-          summaryInput.addEventListener("input", () => {
-            section.summaryText = summaryInput.value || DEFAULT_SUMMARY_TEXT;
-            saveDoc();
-            updateOutput();
-          });
+          const summInput = document.createElement("input");
+          summInput.type = "text"; summInput.placeholder = DEFAULT_SUMMARY_TEXT;
+          summInput.value = section.summaryText || DEFAULT_SUMMARY_TEXT;
+          summInput.disabled = !section.collapsible;
+          summInput.title = "Texte du lien d'ouverture";
+          summInput.addEventListener("input", () => { section.summaryText = summInput.value || DEFAULT_SUMMARY_TEXT; saveDoc(); updateOutput(); });
 
           const openLabel = document.createElement("label");
           openLabel.className = "ctrl";
           const openCheck = document.createElement("input");
-          openCheck.type = "checkbox";
-          openCheck.checked = !!section.openByDefault;
-          openCheck.disabled = !section.collapsible;
-          openCheck.addEventListener("change", () => {
-            section.openByDefault = openCheck.checked;
-            saveDoc();
-            updateOutput();
-          });
+          openCheck.type = "checkbox"; openCheck.checked = !!section.openByDefault; openCheck.disabled = !section.collapsible;
+          openCheck.addEventListener("change", () => { section.openByDefault = openCheck.checked; saveDoc(); updateOutput(); });
           openLabel.appendChild(openCheck);
           openLabel.appendChild(document.createTextNode(" Ouverte par défaut"));
 
-          sectionOpts.appendChild(collapsibleLabel);
-          sectionOpts.appendChild(summaryInput);
-          sectionOpts.appendChild(openLabel);
-          block.appendChild(sectionOpts);
+          opts.appendChild(collLabel); opts.appendChild(summInput); opts.appendChild(openLabel);
+          body.appendChild(opts);
         }
 
         const grid = document.createElement("div");
@@ -2166,318 +1529,290 @@
           const row = document.createElement("div");
           row.className = "field-row" + (field.type === "notice" ? " notice-row" : "") + (field.multiline ? " multiline-row" : "");
 
-          const moveBtns = document.createElement("div");
-          moveBtns.className = "field-move-btns";
-
-          const upBtn = document.createElement("button");
-          upBtn.type = "button";
-          upBtn.className = "btn-move";
-          upBtn.textContent = "▲";
-          upBtn.title = "Monter";
-          upBtn.disabled = fIdx === 0;
-          upBtn.addEventListener("click", () => moveField(section, fIdx, -1));
-
-          const downBtn = document.createElement("button");
-          downBtn.type = "button";
-          downBtn.className = "btn-move";
-          downBtn.textContent = "▼";
-          downBtn.title = "Descendre";
-          downBtn.disabled = fIdx === section.fields.length - 1;
-          downBtn.addEventListener("click", () => moveField(section, fIdx, 1));
-
-          moveBtns.appendChild(upBtn);
-          moveBtns.appendChild(downBtn);
+          const fMoveBtns = document.createElement("div");
+          fMoveBtns.className = "field-move-btns";
+          const fu = document.createElement("button"); fu.type="button"; fu.className="btn-move"; fu.textContent="▲"; fu.title="Monter"; fu.disabled = fIdx === 0;
+          fu.addEventListener("click", () => moveField(section, fIdx, -1));
+          const fd = document.createElement("button"); fd.type="button"; fd.className="btn-move"; fd.textContent="▼"; fd.title="Descendre"; fd.disabled = fIdx === section.fields.length - 1;
+          fd.addEventListener("click", () => moveField(section, fIdx, 1));
+          fMoveBtns.appendChild(fu); fMoveBtns.appendChild(fd);
 
           const typeSelect = document.createElement("select");
-          typeSelect.className = "field-type-select";
-          typeSelect.title = "Type de champ";
-          typeSelect.innerHTML = `
-            <option value="normal">Classique</option>
-            <option value="notice">Consigne</option>
-          `;
+          typeSelect.className = "field-type-select"; typeSelect.title = "Type";
+          typeSelect.innerHTML = `<option value="normal">Classique</option><option value="notice">Consigne</option>`;
           typeSelect.value = field.type === "notice" ? "notice" : "normal";
-          typeSelect.addEventListener("change", () => {
-            field.type = typeSelect.value === "notice" ? "notice" : "normal";
-            saveDoc();
-            renderSections();
-          });
+          typeSelect.addEventListener("change", () => { field.type = typeSelect.value === "notice" ? "notice" : "normal"; saveDoc(); renderSections(); });
 
           const labelInput = document.createElement("input");
-          labelInput.type = "text";
-          labelInput.className = "field-label-input";
-          labelInput.value = field.label;
-          labelInput.placeholder = "Libellé du champ";
-          labelInput.title = "Libellé du champ";
-          labelInput.disabled = field.type === "notice";
-          labelInput.addEventListener("input", () => {
-            field.label = labelInput.value;
-            saveDoc();
-            updateOutput();
-          });
+          labelInput.type = "text"; labelInput.className = "field-label-input";
+          labelInput.value = field.label; labelInput.placeholder = "Libellé"; labelInput.disabled = field.type === "notice";
+          labelInput.addEventListener("input", () => { field.label = labelInput.value; saveDoc(); updateOutput(); });
 
-          const input = field.multiline
-            ? document.createElement("textarea")
-            : document.createElement("input");
-          if (!field.multiline) input.type = "text";
-          else input.className = "field-value-input";
-          input.value = field.value;
-          input.placeholder = "Saisir la valeur";
-          input.title = field.multiline
-            ? "Valeur du champ (Entrée = retour à la ligne)"
-            : "Valeur du champ (HTML autorisé via + Image)";
-          input.addEventListener("input", () => {
-            field.value = input.value;
-            saveDoc();
-            updateOutput();
-          });
+          const valInput = field.multiline ? document.createElement("textarea") : document.createElement("input");
+          if (!field.multiline) valInput.type = "text"; else valInput.className = "field-value-input";
+          valInput.value = field.value; valInput.placeholder = "Saisir la valeur";
+          valInput.title = field.multiline ? "Entrée = retour à la ligne" : "HTML autorisé via + Image";
+          valInput.addEventListener("input", () => { field.value = valInput.value; saveDoc(); updateOutput(); });
 
-          const imgBtn = document.createElement("button");
-          imgBtn.type = "button";
-          imgBtn.className = "btn-img";
-          imgBtn.textContent = "+ Image";
-          imgBtn.title = "Insérer le code <img> de l'alarme orange";
-          imgBtn.addEventListener("click", () => insertImageTag(input, field.alarmImageSrc));
+          const imgBtn = document.createElement("button"); imgBtn.type="button"; imgBtn.className="btn-img"; imgBtn.textContent="+ Image"; imgBtn.title="Insérer code alarme";
+          imgBtn.addEventListener("click", () => insertImageTag(valInput, field.alarmImageSrc));
 
-          const fDel = document.createElement("button");
-          fDel.type = "button";
-          fDel.className = "btn-danger";
-          fDel.textContent = "✕";
-          fDel.title = "Supprimer ce champ";
-          fDel.addEventListener("click", () => {
-            section.fields.splice(fIdx, 1);
-            saveDoc();
-            renderSections();
-            updateOutput();
-          });
+          const fDel = document.createElement("button"); fDel.type="button"; fDel.className="btn-danger btn-ghost"; fDel.textContent="✕"; fDel.title="Supprimer";
+          fDel.addEventListener("click", () => { section.fields.splice(fIdx, 1); saveDoc(); renderSections(); updateOutput(); });
 
-          row.appendChild(moveBtns);
-          row.appendChild(typeSelect);
-          row.appendChild(labelInput);
-          row.appendChild(input);
-          row.appendChild(imgBtn);
-          row.appendChild(fDel);
+          row.appendChild(fMoveBtns); row.appendChild(typeSelect); row.appendChild(labelInput);
+          row.appendChild(valInput); row.appendChild(imgBtn); row.appendChild(fDel);
 
           if (field.type === "notice") {
-            const noticeOpts = document.createElement("div");
-            noticeOpts.className = "notice-options";
-
-            const wrapLabel = document.createElement("label");
-            wrapLabel.className = "ctrl";
-            const wrapCheck = document.createElement("input");
-            wrapCheck.type = "checkbox";
-            wrapCheck.checked = field.wrapAlarms !== false;
-            wrapCheck.addEventListener("change", () => {
-              field.wrapAlarms = wrapCheck.checked;
-              saveDoc();
-              updateOutput();
-            });
-            wrapLabel.appendChild(wrapCheck);
-            wrapLabel.appendChild(document.createTextNode(" Icônes auto"));
-
-            const srcLabel = document.createElement("label");
-            srcLabel.textContent = "Chemin image PNG :";
-            const srcInput = document.createElement("input");
-            srcInput.type = "text";
-            srcInput.value = field.alarmImageSrc || DEFAULT_ALARM_IMG;
-            srcInput.placeholder = "Chemin de l'image";
-            srcInput.addEventListener("input", () => {
-              field.alarmImageSrc = srcInput.value || DEFAULT_ALARM_IMG;
-              saveDoc();
-              updateOutput();
-            });
-
-            noticeOpts.appendChild(wrapLabel);
-            noticeOpts.appendChild(srcLabel);
-            noticeOpts.appendChild(srcInput);
-            row.appendChild(noticeOpts);
+            const nopts = document.createElement("div"); nopts.className = "notice-options";
+            const wL = document.createElement("label"); wL.className = "ctrl";
+            const wC = document.createElement("input"); wC.type="checkbox"; wC.checked = field.wrapAlarms !== false;
+            wC.addEventListener("change", () => { field.wrapAlarms = wC.checked; saveDoc(); updateOutput(); });
+            wL.appendChild(wC); wL.appendChild(document.createTextNode(" Icônes auto"));
+            const sL = document.createElement("label"); sL.textContent = "Image PNG :"; sL.style.marginLeft = "0.5rem";
+            const sI = document.createElement("input"); sI.type="text"; sI.value = field.alarmImageSrc || DEFAULT_ALARM_IMG; sI.placeholder="Chemin image";
+            sI.style.flex="1"; sI.style.minWidth="0";
+            sI.addEventListener("input", () => { field.alarmImageSrc = sI.value || DEFAULT_ALARM_IMG; saveDoc(); updateOutput(); });
+            nopts.appendChild(wL); nopts.appendChild(sL); nopts.appendChild(sI);
+            row.appendChild(nopts);
           }
 
           grid.appendChild(row);
         });
 
-        block.appendChild(grid);
+        const addFieldBtn = document.createElement("button");
+        addFieldBtn.type = "button"; addFieldBtn.className = "section-add-field-btn";
+        addFieldBtn.textContent = "+ Ajouter un champ à cette section";
+        addFieldBtn.addEventListener("click", () => openAddField(section.id));
+
+        body.appendChild(grid);
+        body.appendChild(addFieldBtn);
+        block.appendChild(body);
         container.appendChild(block);
       });
 
+      // Badge nombre de sections
+      document.getElementById("sectionsBadge").textContent = doc.sections.length;
       updateOutput();
     }
 
-    /**
-     * Construit la liste ordonnée des cibles de style (titres de section + éléments globaux).
-     * @returns {{ id: string, label: string, style: object }[]} Cibles de style
-     */
+    /* ── Styles (mise en forme) ── */
+
     function getStyleTargets() {
       const targets = doc.sections.map((s) => ({
         id: "section:" + s.id,
         label: `Titre « ${s.title || "Section"} »`,
         style: s.titleStyle,
       }));
-      targets.push({ id: "link", label: "Style du lien vidéo", style: doc.styles.link });
-      targets.push({ id: "fileLink", label: "Style du lien fichier", style: doc.styles.fileLink });
-      targets.push({ id: "labels", label: "Libellés des champs", style: doc.styles.labels });
-      targets.push({ id: "notice", label: "Consignes importantes", style: doc.styles.notice });
-      targets.push({ id: "summary", label: "Lien d'ouverture (summary)", style: doc.styles.summary });
-      targets.push({ id: "bottomText", label: "Texte d'information du bas", style: doc.styles.bottomText });
+      targets.push({ id: "link",       label: "Lien vidéo",            style: doc.styles.link });
+      targets.push({ id: "fileLink",   label: "Lien fichier",           style: doc.styles.fileLink });
+      targets.push({ id: "labels",     label: "Libellés des champs",    style: doc.styles.labels });
+      targets.push({ id: "notice",     label: "Consignes importantes",  style: doc.styles.notice });
+      targets.push({ id: "summary",    label: "Lien summary (details)", style: doc.styles.summary });
+      targets.push({ id: "bottomText", label: "Texte d'aide du bas",    style: doc.styles.bottomText });
       return targets;
     }
 
     function findStyleById(id) {
-      if (id === "link") return doc.styles.link;
-      if (id === "fileLink") return doc.styles.fileLink;
-      if (id === "labels") return doc.styles.labels;
-      if (id === "notice") return doc.styles.notice;
-      if (id === "summary") return doc.styles.summary;
+      if (id === "link")       return doc.styles.link;
+      if (id === "fileLink")   return doc.styles.fileLink;
+      if (id === "labels")     return doc.styles.labels;
+      if (id === "notice")     return doc.styles.notice;
+      if (id === "summary")    return doc.styles.summary;
       if (id === "bottomText") return doc.styles.bottomText;
-      const found = getStyleTargets().find((t) => t.id === id);
-      return found ? found.style : null;
+      return (getStyleTargets().find((t) => t.id === id) || {}).style || null;
     }
 
     function renderStyleControls() {
-      const container = document.getElementById("stylesContainer");
-      container.innerHTML = getStyleTargets().map((t) => {
+      document.getElementById("stylesContainer").innerHTML = getStyleTargets().map((t) => {
         const s = t.style;
         return `
         <div class="style-row">
           <span class="style-row-label">${escapeHtml(t.label)}</span>
           <div class="style-controls">
-            <label class="ctrl">
-              <input type="checkbox" data-target="${t.id}" data-prop="colorOn" ${s.colorOn ? "checked" : ""}>
-              Couleur
-              <input type="color" data-target="${t.id}" data-prop="colorValue" value="${s.colorValue}" ${s.colorOn ? "" : "disabled"}>
-            </label>
-            <label class="ctrl">
-              <input type="checkbox" data-target="${t.id}" data-prop="bgOn" ${s.bgOn ? "checked" : ""}>
-              Surlignement
-              <input type="color" data-target="${t.id}" data-prop="bgValue" value="${s.bgValue}" ${s.bgOn ? "" : "disabled"}>
-            </label>
-            <label class="ctrl">
-              Taille
-              <input type="number" data-target="${t.id}" data-prop="size" value="${s.size}" min="0.5" max="4" step="0.1"> em
-            </label>
-            <label class="ctrl">
-              <input type="checkbox" data-target="${t.id}" data-prop="bold" ${s.bold ? "checked" : ""}> Gras
-            </label>
-            <label class="ctrl">
-              <input type="checkbox" data-target="${t.id}" data-prop="italic" ${s.italic ? "checked" : ""}> Italique
-            </label>
-            <label class="ctrl">
-              <input type="checkbox" data-target="${t.id}" data-prop="underline" ${s.underline ? "checked" : ""}> Souligné
-            </label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="colorOn" ${s.colorOn ? "checked" : ""}> Couleur
+              <input type="color" data-target="${t.id}" data-prop="colorValue" value="${s.colorValue}" ${s.colorOn ? "" : "disabled"}></label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="bgOn" ${s.bgOn ? "checked" : ""}> Fond
+              <input type="color" data-target="${t.id}" data-prop="bgValue" value="${s.bgValue}" ${s.bgOn ? "" : "disabled"}></label>
+            <label class="ctrl">Taille <input type="number" data-target="${t.id}" data-prop="size" value="${s.size}" min="0.5" max="4" step="0.1"> em</label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="bold"      ${s.bold      ? "checked" : ""}> Gras</label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="italic"    ${s.italic    ? "checked" : ""}> Italique</label>
+            <label class="ctrl"><input type="checkbox" data-target="${t.id}" data-prop="underline" ${s.underline ? "checked" : ""}> Souligné</label>
           </div>
         </div>`;
       }).join("");
     }
 
     function handleStyleChange(e) {
-      const el = e.target;
-      const target = el.dataset.target;
-      const prop = el.dataset.prop;
-      if (!target || !prop) return;
-
-      const s = findStyleById(target);
+      if (!e.target.dataset.target || !e.target.dataset.prop) return;
+      const s = findStyleById(e.target.dataset.target);
       if (!s) return;
-
-      if (el.type === "checkbox") {
-        s[prop] = el.checked;
-      } else if (prop === "size") {
-        s[prop] = parseFloat(el.value) || 1;
-      } else {
-        s[prop] = el.value;
-      }
-
-      // Active/désactive le sélecteur de couleur associé à sa case
-      if (prop === "colorOn" || prop === "bgOn") {
-        renderStyleControls();
-      }
-
-      saveDoc();
-      updateOutput();
+      if (e.target.type === "checkbox") s[e.target.dataset.prop] = e.target.checked;
+      else if (e.target.dataset.prop === "size") s[e.target.dataset.prop] = parseFloat(e.target.value) || 1;
+      else s[e.target.dataset.prop] = e.target.value;
+      if (e.target.dataset.prop === "colorOn" || e.target.dataset.prop === "bgOn") renderStyleControls();
+      saveDoc(); updateOutput();
     }
 
     function resetStyles() {
       if (!confirm("Réinitialiser toute la mise en forme ?")) return;
       doc.sections.forEach((s) => {
-        s.titleStyle = makeStyle({
-          colorOn: true,
-          colorValue: DEFAULT_TITLE_COLORS[s.id] || DEFAULT_STYLE_COLORS.connexionTitle,
-          size: 1.2,
-        });
+        s.titleStyle = makeStyle({ colorOn: true, colorValue: DEFAULT_TITLE_COLORS[s.id] || DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 });
       });
-      doc.styles.link = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true });
-      doc.styles.fileLink = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true });
-      doc.styles.labels = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 });
-      doc.styles.notice = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false });
-      doc.styles.summary = makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false });
+      doc.styles.link       = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true });
+      doc.styles.fileLink   = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true });
+      doc.styles.labels     = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 });
+      doc.styles.notice     = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false });
+      doc.styles.summary    = makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false });
       doc.styles.bottomText = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.bottomText, size: 1 });
-      saveDoc();
-      renderStyleControls();
-      updateOutput();
+      saveDoc(); renderStyleControls(); updateOutput();
     }
 
-    function showToast(message) {
-      const toast = document.getElementById("toast");
-      toast.textContent = message;
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 2200);
+    /* ── Mode simple (éditeur richtext) ── */
+
+    function buildRichTextToolbar(editor, onChange) {
+      const toolbar = document.createElement("div");
+      toolbar.className = "richtext-toolbar";
+      let savedRange = null;
+
+      const save = () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+      };
+      const restore = () => {
+        if (!savedRange) return false;
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); return true;
+      };
+      editor.addEventListener("keyup", save); editor.addEventListener("mouseup", save);
+
+      const run = (cmd, val) => { editor.focus(); restore(); document.execCommand(cmd, false, val ?? null); onChange(); };
+      const addBtn = (label, cmd, cls, title) => {
+        const btn = document.createElement("button"); btn.type="button"; btn.className="richtext-btn"+(cls?" "+cls:""); btn.textContent=label; btn.title=title;
+        btn.addEventListener("mousedown", (e) => { e.preventDefault(); save(); });
+        btn.addEventListener("click", () => run(cmd));
+        toolbar.appendChild(btn);
+      };
+      addBtn("G","bold","","Gras"); addBtn("I","italic","italic-btn","Italique"); addBtn("S","underline","underline-btn","Souligné");
+      addBtn("•","insertUnorderedList","","Liste à puces"); addBtn("1.","insertOrderedList","","Liste numérotée");
+
+      const applyFontSize = (em) => {
+        editor.focus(); restore();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+        const range = sel.getRangeAt(0);
+        const span = document.createElement("span"); span.style.fontSize = em;
+        try { range.surroundContents(span); } catch (_) { const f = range.extractContents(); span.appendChild(f); range.insertNode(span); }
+        sel.removeAllRanges(); onChange();
+      };
+
+      const sizeWrap = document.createElement("span"); sizeWrap.className = "richtext-size-group";
+      const sL = document.createElement("span"); sL.className="richtext-size-label"; sL.textContent="Taille";
+      sizeWrap.appendChild(sL);
+      [{ value:"0.85em",label:"P"},{value:"1em",label:"N"},{value:"1.2em",label:"G"},{value:"1.5em",label:"TG"},{value:"2em",label:"XG"}].forEach((o) => {
+        const btn = document.createElement("button"); btn.type="button"; btn.className="richtext-btn richtext-size-btn"; btn.textContent=o.label; btn.title=o.value;
+        btn.addEventListener("mousedown",(e)=>{e.preventDefault();save();}); btn.addEventListener("click",()=>applyFontSize(o.value));
+        sizeWrap.appendChild(btn);
+      });
+      toolbar.appendChild(sizeWrap);
+
+      const mkColor = (label, cmd, def) => {
+        const wrap = document.createElement("label"); wrap.className="richtext-color"; wrap.title=label;
+        wrap.appendChild(document.createTextNode(label));
+        const inp = document.createElement("input"); inp.type="color"; inp.value=def;
+        inp.addEventListener("mousedown",(e)=>{e.preventDefault();save();}); inp.addEventListener("input",(e)=>run(cmd,e.target.value));
+        wrap.appendChild(inp); toolbar.appendChild(wrap);
+      };
+      mkColor("Couleur","foreColor","#000000"); mkColor("Fond","backColor","#ffff00");
+
+      const clearBtn = document.createElement("button"); clearBtn.type="button"; clearBtn.className="richtext-btn"; clearBtn.textContent="Effacer style"; clearBtn.title="Retirer la mise en forme";
+      clearBtn.addEventListener("mousedown",(e)=>{e.preventDefault();save();}); clearBtn.addEventListener("click",()=>run("removeFormat"));
+      toolbar.appendChild(clearBtn);
+      return toolbar;
     }
 
-    /**
-     * Rafraîchit toute l'interface à partir du document courant.
-     */
+    function buildRichTextEditor(getContent, setContent) {
+      const wrap = document.createElement("div"); wrap.className = "richtext-wrap";
+      const editor = document.createElement("div"); editor.className="richtext-editor"; editor.contentEditable="true"; editor.innerHTML = getContent() || "";
+      const sync = () => { setContent(editor.innerHTML); saveDoc(); updateOutput(); };
+      editor.addEventListener("input", sync); editor.addEventListener("blur", sync);
+      wrap.appendChild(buildRichTextToolbar(editor, sync)); wrap.appendChild(editor);
+      return wrap;
+    }
+
+    function mountSimpleEditor() {
+      const host = document.getElementById("simpleEditorHost");
+      host.innerHTML = "";
+      host.appendChild(buildRichTextEditor(() => doc.simpleContent, (html) => { doc.simpleContent = html; }));
+      simpleEditorMounted = true;
+    }
+
+    function applyModeUI() {
+      const isSimple = doc.mode === "simple";
+      document.getElementById("videoModePanel").hidden = isSimple;
+      document.getElementById("simpleModePanel").hidden = !isSimple;
+      document.getElementById("panelStyles")?.classList.toggle("hidden-panel", isSimple);
+      document.getElementById("btnModeVideo").classList.toggle("active", !isSimple);
+      document.getElementById("btnModeSimple").classList.toggle("active", isSimple);
+      document.getElementById("headerDesc").textContent = isSimple
+        ? "Rédigez une remarque enrichie — HTML uniquement."
+        : "Complétez les champs — le HTML se met à jour en temps réel.";
+    }
+
+    function setMode(mode) {
+      doc.mode = mode === "simple" ? "simple" : "video";
+      if (doc.mode === "simple" && !simpleEditorMounted) mountSimpleEditor();
+      saveDoc(); applyModeUI(); updateOutput();
+    }
+
+    /* ── Rafraîchissement UI ── */
+
     function refreshUIFromDoc() {
       simpleEditorMounted = false;
-      document.getElementById("siteNameInput").value = doc.siteName || "";
-      document.getElementById("urlInput").value = doc.url;
-      document.getElementById("linkTextInput").value = doc.linkText || DEFAULT_LINK_TEXT;
-      document.getElementById("fileUrlInput").value = doc.fileUrl || "";
-      document.getElementById("fileLinkTextInput").value = doc.fileLinkText || DEFAULT_FILE_LINK_TEXT;
-      document.getElementById("includeVideoLink").checked = doc.includeVideoLink !== false;
-      document.getElementById("includeFileLink").checked = !!doc.includeFileLink;
+      document.getElementById("siteNameInput").value      = doc.siteName || "";
+      document.getElementById("urlInput").value            = doc.url;
+      document.getElementById("linkTextInput").value       = doc.linkText || DEFAULT_LINK_TEXT;
+      document.getElementById("fileUrlInput").value        = doc.fileUrl || "";
+      document.getElementById("fileLinkTextInput").value   = doc.fileLinkText || DEFAULT_FILE_LINK_TEXT;
+      document.getElementById("includeVideoLink").checked  = doc.includeVideoLink !== false;
+      document.getElementById("includeFileLink").checked   = !!doc.includeFileLink;
       document.getElementById("includeFooterHelp").checked = doc.includeFooterHelp !== false;
       applyModeUI();
       if (doc.mode === "simple") mountSimpleEditor();
-      renderSections();
-      renderStyleControls();
-      updateOutput();
+      renderSections(); renderStyleControls(); updateOutput();
     }
 
-    /**
-     * Exporte les données saisies dans un fichier JSON.
-     */
+    /* ── Export / Import ── */
+
+    function sanitizeExportFileName(name) {
+      return String(name).trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-")
+        .replace(/^-|-$/g, "").slice(0, 80);
+    }
+
+    function buildExportFileName() {
+      const site = sanitizeExportFileName(doc.siteName);
+      const date = new Date().toISOString().slice(0, 10);
+      return site ? `${site}-remarques-${date}.json` : `generateur-remarques-${date}.json`;
+    }
+
     function exportDoc() {
       const payload = {
-        exportVersion: 1,
-        exportedAt: new Date().toISOString(),
-        generator: "generateur-remarques",
-        appVersion: APP_VERSION,
-        siteName: doc.siteName,
-        mode: doc.mode,
-        url: doc.url,
-        linkText: doc.linkText,
-        fileUrl: doc.fileUrl,
-        fileLinkText: doc.fileLinkText,
-        includeVideoLink: doc.includeVideoLink,
-        includeFileLink: doc.includeFileLink,
+        exportVersion: 1, exportedAt: new Date().toISOString(),
+        generator: "generateur-remarques", appVersion: APP_VERSION,
+        siteName: doc.siteName, mode: doc.mode, url: doc.url,
+        linkText: doc.linkText, fileUrl: doc.fileUrl, fileLinkText: doc.fileLinkText,
+        includeVideoLink: doc.includeVideoLink, includeFileLink: doc.includeFileLink,
         includeFooterHelp: doc.includeFooterHelp,
-        simpleContent: doc.simpleContent,
-        spacing: doc.spacing,
-        sections: doc.sections,
-        styles: doc.styles,
+        simpleContent: doc.simpleContent, spacing: doc.spacing,
+        sections: doc.sections, styles: doc.styles,
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = buildExportFileName();
-      link.click();
+      const a = document.createElement("a"); a.href = url; a.download = buildExportFileName(); a.click();
       URL.revokeObjectURL(url);
-      showToast("Informations exportées.");
+      showToast("Informations exportées ✓");
     }
 
-    /**
-     * Charge les données depuis un fichier JSON exporté.
-     * @param {File} file Fichier de sauvegarde
-     */
     function importDoc(file) {
       if (!file) return;
       const reader = new FileReader();
@@ -2485,10 +1820,8 @@
         try {
           const parsed = JSON.parse(e.target.result);
           if (!parsed || typeof parsed !== "object") throw new Error("Format invalide");
-          doc = normalizeDoc(parsed);
-          refreshUIFromDoc();
-          saveDoc();
-          showToast("Informations chargées avec succès.");
+          doc = normalizeDoc(parsed); refreshUIFromDoc(); saveDoc();
+          showToast("Informations chargées ✓");
         } catch (_) {
           alert("Impossible de charger ce fichier. Utilisez une sauvegarde exportée depuis ce générateur.");
         }
@@ -2497,64 +1830,50 @@
       reader.readAsText(file);
     }
 
+    /* ── Modales ── */
+
     function toggleFieldModalNoticeOptions() {
       const isNotice = document.getElementById("fieldType").value === "notice";
       document.getElementById("fieldNoticeOptions").hidden = !isNotice;
       document.getElementById("fieldLabelWrap").hidden = isNotice;
-      if (isNotice) {
-        document.getElementById("fieldLabel").value = "";
-      }
+      if (isNotice) document.getElementById("fieldLabel").value = "";
     }
 
-    /* --- Modale : ajout de champ --- */
     function openAddField(preselectSectionId) {
-      if (doc.sections.length === 0) {
-        alert("Ajoutez d'abord une section pour y placer un champ.");
-        return;
-      }
-      const select = document.getElementById("fieldSection");
-      select.innerHTML = doc.sections
-        .map((s) => `<option value="${s.id}">${escapeHtml(s.title || "Section")}</option>`)
-        .join("");
-      if (preselectSectionId) select.value = preselectSectionId;
+      if (doc.sections.length === 0) { alert("Ajoutez d'abord une section."); return; }
+      const sel = document.getElementById("fieldSection");
+      sel.innerHTML = doc.sections.map((s) => `<option value="${s.id}">${escapeHtml(s.title || "Section")}</option>`).join("");
+      if (preselectSectionId) sel.value = preselectSectionId;
       document.getElementById("fieldLabel").value = "";
       document.getElementById("fieldValue").value = "";
       document.getElementById("fieldType").value = "normal";
       document.getElementById("fieldWrapAlarms").checked = true;
-      document.getElementById("fieldNoticeOptions").hidden = true;
-      document.getElementById("fieldLabelWrap").hidden = false;
       toggleFieldModalNoticeOptions();
       document.getElementById("addFieldModal").classList.add("open");
       document.getElementById("fieldLabel").focus();
     }
-
-    function closeAddField() {
-      document.getElementById("addFieldModal").classList.remove("open");
-    }
-
+    function closeAddField()  { document.getElementById("addFieldModal").classList.remove("open"); }
     function confirmAddField() {
       const sectionId = document.getElementById("fieldSection").value;
-      const label = document.getElementById("fieldLabel").value.trim();
-      const value = document.getElementById("fieldValue").value;
-      const type = document.getElementById("fieldType").value === "notice" ? "notice" : "normal";
-      if (!label && type !== "notice") {
-        document.getElementById("fieldLabel").focus();
-        return;
-      }
+      const label     = document.getElementById("fieldLabel").value.trim();
+      const type      = document.getElementById("fieldType").value === "notice" ? "notice" : "normal";
+      if (!label && type !== "notice") { document.getElementById("fieldLabel").focus(); return; }
       const section = doc.sections.find((s) => s.id === sectionId);
       if (!section) return;
       section.fields.push(makeField({
         label: label || "Consigne importante",
-        value,
+        value: document.getElementById("fieldValue").value,
         type,
         wrapAlarms: document.getElementById("fieldWrapAlarms").checked,
       }));
-      saveDoc();
-      renderSections();
-      closeAddField();
+      saveDoc(); renderSections(); closeAddField();
     }
 
-    /* --- Modale : ajout de section --- */
+    function toggleSectionModalOptions() {
+      const enabled = document.getElementById("sectionCollapsible").checked;
+      document.getElementById("sectionCollapsibleOptions").hidden = !enabled;
+      if (!enabled) document.getElementById("sectionOpenByDefault").checked = false;
+    }
     function openAddSection() {
       document.getElementById("sectionTitle").value = "";
       document.getElementById("sectionLayout").value = "inline";
@@ -2562,72 +1881,49 @@
       document.getElementById("sectionSummary").value = DEFAULT_SUMMARY_TEXT;
       document.getElementById("sectionOpenByDefault").checked = false;
       document.getElementById("sectionCollapsibleOptions").hidden = true;
-      toggleSectionModalOptions();
       document.getElementById("addSectionModal").classList.add("open");
       document.getElementById("sectionTitle").focus();
     }
-
-    function closeAddSection() {
-      document.getElementById("addSectionModal").classList.remove("open");
-    }
-
+    function closeAddSection()  { document.getElementById("addSectionModal").classList.remove("open"); }
     function confirmAddSection() {
-      const title = document.getElementById("sectionTitle").value.trim();
-      const layout = document.getElementById("sectionLayout").value === "list" ? "list" : "inline";
-      if (!title) {
-        document.getElementById("sectionTitle").focus();
-        return;
-      }
+      const title  = document.getElementById("sectionTitle").value.trim();
+      if (!title) { document.getElementById("sectionTitle").focus(); return; }
       doc.sections.push(makeSection({
         title,
-        layout,
+        layout: document.getElementById("sectionLayout").value === "list" ? "list" : "inline",
         collapsible: document.getElementById("sectionCollapsible").checked,
         summaryText: document.getElementById("sectionSummary").value.trim() || DEFAULT_SUMMARY_TEXT,
         openByDefault: document.getElementById("sectionOpenByDefault").checked,
       }));
-      saveDoc();
-      renderSections();
-      renderStyleControls();
-      closeAddSection();
+      saveDoc(); renderSections(); renderStyleControls(); closeAddSection();
     }
 
     function resetAll() {
       if (!confirm("Réinitialiser toutes les sections, champs et mise en forme ?")) return;
-      doc = defaultDoc();
-      saveDoc();
-      refreshUIFromDoc();
+      doc = defaultDoc(); saveDoc(); refreshUIFromDoc();
     }
-
     function resetSimple() {
       if (!confirm("Effacer le texte de la remarque ?")) return;
-      doc.simpleContent = "";
-      saveDoc();
-      simpleEditorMounted = false;
-      mountSimpleEditor();
-      updateOutput();
+      doc.simpleContent = ""; saveDoc(); simpleEditorMounted = false; mountSimpleEditor(); updateOutput();
     }
 
     async function copyHtml() {
       const html = document.getElementById("htmlOutput").value;
       try {
         await navigator.clipboard.writeText(html);
-        showToast("HTML copié dans le presse-papiers !");
+        showToast("HTML copié dans le presse-papiers ✓");
       } catch (_) {
         document.getElementById("htmlOutput").select();
         document.execCommand("copy");
-        showToast("HTML copié (méthode alternative).");
+        showToast("HTML copié ✓");
       }
     }
 
-    /* --- Câblage des événements --- */
+    /* ── Câblage des événements ── */
+
     document.getElementById("btnExport").addEventListener("click", exportDoc);
-    document.getElementById("btnImport").addEventListener("click", () => {
-      document.getElementById("importFileInput").click();
-    });
-    document.getElementById("importFileInput").addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (file) importDoc(file);
-    });
+    document.getElementById("btnImport").addEventListener("click", () => document.getElementById("importFileInput").click());
+    document.getElementById("importFileInput").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) importDoc(f); });
     document.getElementById("btnAddSection").addEventListener("click", openAddSection);
     document.getElementById("btnAddField").addEventListener("click", () => openAddField(null));
     document.getElementById("btnReset").addEventListener("click", resetAll);
@@ -2636,13 +1932,10 @@
     document.getElementById("btnModeSimple").addEventListener("click", () => setMode("simple"));
     document.getElementById("btnCopy").addEventListener("click", copyHtml);
     document.getElementById("btnResetStyles").addEventListener("click", resetStyles);
-
     document.getElementById("btnFieldCancel").addEventListener("click", closeAddField);
     document.getElementById("btnFieldConfirm").addEventListener("click", confirmAddField);
     document.getElementById("fieldType").addEventListener("change", toggleFieldModalNoticeOptions);
-    document.getElementById("btnFieldInsertImage").addEventListener("click", () => {
-      insertImageTag(document.getElementById("fieldValue"));
-    });
+    document.getElementById("btnFieldInsertImage").addEventListener("click", () => insertImageTag(document.getElementById("fieldValue")));
     document.getElementById("btnSectionCancel").addEventListener("click", closeAddSection);
     document.getElementById("btnSectionConfirm").addEventListener("click", confirmAddSection);
     document.getElementById("sectionCollapsible").addEventListener("change", toggleSectionModalOptions);
@@ -2651,95 +1944,43 @@
     stylesContainer.addEventListener("input", handleStyleChange);
     stylesContainer.addEventListener("change", handleStyleChange);
 
-    document.getElementById("addFieldModal").addEventListener("click", (e) => {
-      if (e.target.id === "addFieldModal") closeAddField();
-    });
-    document.getElementById("addSectionModal").addEventListener("click", (e) => {
-      if (e.target.id === "addSectionModal") closeAddSection();
-    });
+    document.getElementById("addFieldModal").addEventListener("click",   (e) => { if (e.target.id === "addFieldModal")   closeAddField(); });
+    document.getElementById("addSectionModal").addEventListener("click", (e) => { if (e.target.id === "addSectionModal") closeAddSection(); });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeAddField();
-        closeAddSection();
-      }
+      if (e.key === "Escape") { closeAddField(); closeAddSection(); }
       if (e.key === "Enter") {
-        if (document.getElementById("addFieldModal").classList.contains("open")) confirmAddField();
+        if (document.getElementById("addFieldModal").classList.contains("open"))   confirmAddField();
         else if (document.getElementById("addSectionModal").classList.contains("open")) confirmAddSection();
       }
     });
 
-    /* --- Initialisation --- */
-    document.getElementById("appTitle").title = "Version " + APP_VERSION + " (" + APP_BUILD + ")";
-    loadDoc();
-    refreshUIFromDoc();
-    document.getElementById("siteNameInput").addEventListener("input", (e) => {
-      doc.siteName = e.target.value;
-      saveDoc();
-    });
-    document.getElementById("urlInput").addEventListener("input", (e) => {
-      doc.url = e.target.value;
-      saveDoc();
-      updateOutput();
-    });
-    document.getElementById("linkTextInput").addEventListener("input", (e) => {
-      doc.linkText = e.target.value || DEFAULT_LINK_TEXT;
-      saveDoc();
-      updateOutput();
-    });
-    document.getElementById("fileUrlInput").addEventListener("input", (e) => {
-      doc.fileUrl = e.target.value;
-      saveDoc();
-      updateOutput();
-    });
-    document.getElementById("fileLinkTextInput").addEventListener("input", (e) => {
-      doc.fileLinkText = e.target.value || DEFAULT_FILE_LINK_TEXT;
-      saveDoc();
-      updateOutput();
-    });
-    document.getElementById("includeVideoLink").addEventListener("change", (e) => {
-      doc.includeVideoLink = e.target.checked;
-      saveDoc();
-      updateOutput();
-    });
-    document.getElementById("includeFileLink").addEventListener("change", (e) => {
-      doc.includeFileLink = e.target.checked;
-      saveDoc();
-      updateOutput();
-    });
-    document.getElementById("btnPickFile").addEventListener("click", () => {
-      document.getElementById("fileUrlPicker").click();
-    });
+    document.getElementById("siteNameInput").addEventListener("input", (e) => { doc.siteName = e.target.value; saveDoc(); });
+    document.getElementById("urlInput").addEventListener("input", (e) => { doc.url = e.target.value; saveDoc(); updateOutput(); });
+    document.getElementById("linkTextInput").addEventListener("input", (e) => { doc.linkText = e.target.value || DEFAULT_LINK_TEXT; saveDoc(); updateOutput(); });
+    document.getElementById("fileUrlInput").addEventListener("input", (e) => { doc.fileUrl = e.target.value; saveDoc(); updateOutput(); });
+    document.getElementById("fileLinkTextInput").addEventListener("input", (e) => { doc.fileLinkText = e.target.value || DEFAULT_FILE_LINK_TEXT; saveDoc(); updateOutput(); });
+    document.getElementById("includeVideoLink").addEventListener("change", (e) => { doc.includeVideoLink = e.target.checked; saveDoc(); updateOutput(); });
+    document.getElementById("includeFileLink").addEventListener("change", (e) => { doc.includeFileLink = e.target.checked; saveDoc(); updateOutput(); });
+    document.getElementById("includeFooterHelp").addEventListener("change", (e) => { doc.includeFooterHelp = e.target.checked; saveDoc(); updateOutput(); });
+
+    document.getElementById("btnPickFile").addEventListener("click", () => document.getElementById("fileUrlPicker").click());
     document.getElementById("fileUrlPicker").addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
+      const file = e.target.files && e.target.files[0]; if (!file) return;
       const name = file.name;
-      const fileUrlInput = document.getElementById("fileUrlInput");
-      const fileLinkTextInput = document.getElementById("fileLinkTextInput");
-      const currentUrl = fileUrlInput.value.trim();
-      if (!currentUrl) {
-        fileUrlInput.value = name;
-        doc.fileUrl = name;
-      } else if (currentUrl.endsWith("/")) {
-        fileUrlInput.value = currentUrl + name;
-        doc.fileUrl = fileUrlInput.value;
-      }
-      if (!fileLinkTextInput.value.trim() || fileLinkTextInput.value === DEFAULT_FILE_LINK_TEXT) {
+      const urlInp  = document.getElementById("fileUrlInput");
+      const textInp = document.getElementById("fileLinkTextInput");
+      const cur = urlInp.value.trim();
+      if (!cur) { urlInp.value = name; doc.fileUrl = name; }
+      else if (cur.endsWith("/")) { urlInp.value = cur + name; doc.fileUrl = urlInp.value; }
+      if (!textInp.value.trim() || textInp.value === DEFAULT_FILE_LINK_TEXT) {
         const label = name.replace(/\.[^.]+$/, "") || name;
-        fileLinkTextInput.value = label;
-        doc.fileLinkText = label;
+        textInp.value = label; doc.fileLinkText = label;
       }
-      doc.includeFileLink = true;
-      document.getElementById("includeFileLink").checked = true;
-      saveDoc();
-      updateOutput();
-      showToast("Fichier repéré — complétez l'URL serveur si le nom seul ne suffit pas.");
+      doc.includeFileLink = true; document.getElementById("includeFileLink").checked = true;
+      saveDoc(); updateOutput();
+      showToast("Fichier repéré — complétez l'URL serveur si nécessaire.");
       e.target.value = "";
-    });
-    document.getElementById("includeFooterHelp").addEventListener("change", (e) => {
-      doc.includeFooterHelp = e.target.checked;
-      saveDoc();
-      updateOutput();
     });
 
     const previewBgInput = document.getElementById("previewBgInput");
@@ -2749,6 +1990,11 @@
       localStorage.setItem(PREVIEW_BG_KEY, previewBg);
       updateOutput();
     });
+
+    /* ── Initialisation ── */
+    document.getElementById("appTitle").title = `Version ${APP_VERSION} (${APP_BUILD})`;
+    loadDoc();
+    refreshUIFromDoc();
   </script>
 </body>
 </html>
