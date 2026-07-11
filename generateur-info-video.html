@@ -312,14 +312,6 @@
       gap: 0.55rem;
     }
 
-    .file-url-row {
-      display: flex;
-      gap: 0.4rem;
-      align-items: center;
-      width: 100%;
-    }
-    .file-url-row input { flex: 1; min-width: 0; }
-    .file-url-row button { flex-shrink: 0; white-space: nowrap; }
 
     /* ── Options (checkboxes) ── */
     .options-grid {
@@ -758,28 +750,12 @@
                 <label for="linkTextInput">Texte lien vidéo</label>
                 <input type="text" id="linkTextInput" placeholder="Saisir la valeur" />
               </div>
-              <div class="form-row">
-                <label for="fileUrlInput">URL fichier</label>
-                <div class="file-url-row">
-                  <input type="text" id="fileUrlInput" placeholder="https://.../document.pdf" />
-                  <button type="button" id="btnPickFile">Parcourir…</button>
-                  <input type="file" id="fileUrlPicker" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" hidden />
-                </div>
-              </div>
-              <div class="form-row">
-                <label for="fileLinkTextInput">Texte lien fichier</label>
-                <input type="text" id="fileLinkTextInput" placeholder="Saisir la valeur" />
-              </div>
             </div>
             <hr class="sep">
             <div class="options-grid">
               <label class="ctrl">
                 <input type="checkbox" id="includeVideoLink" checked>
                 Inclure le lien vidéo dans le HTML
-              </label>
-              <label class="ctrl">
-                <input type="checkbox" id="includeFileLink">
-                Inclure le lien fichier dans le HTML
               </label>
               <label class="ctrl">
                 <input type="checkbox" id="includeFooterHelp" checked>
@@ -975,21 +951,19 @@
 
   <!-- ══ JavaScript ══ -->
   <script>
-    const STORAGE_KEY    = "generateur-info-video-v21";
-    const APP_VERSION    = "3.0";
-    const APP_BUILD      = "20260711a";
+    const STORAGE_KEY    = "generateur-info-video-v22";
+    const APP_VERSION    = "3.1";
+    const APP_BUILD      = "20260711b";
     const PREVIEW_BG_KEY = "generateur-info-video-previewbg";
     const DEFAULT_ALARM_IMG    = "jsp/bandeau/themes/default/alarme/images/bandeau/alarme_orange.png";
     const DEFAULT_SUMMARY_TEXT = "Cliquez ici pour afficher !";
     const DEFAULT_LINK_TEXT    = "CLIQUEZ ICI POUR ACCÉDER AUX VIDÉOS !";
-    const DEFAULT_FILE_LINK_TEXT = "OUVRIR LE DOCUMENT";
 
     let previewBg = localStorage.getItem(PREVIEW_BG_KEY) || "#2b2b2b";
 
     const DEFAULT_STYLE_COLORS = {
       diversTitle:    "#2E7D32",
       link:           "#D97B1C",
-      fileLink:       "#1565C0",
       connexionTitle: "#2E86C1",
       labels:         "#000000",
       notice:         "#C62828",
@@ -1093,8 +1067,7 @@
       return {
         mode: "video", siteName: "", url: "",
         linkText: DEFAULT_LINK_TEXT,
-        fileUrl: "", fileLinkText: DEFAULT_FILE_LINK_TEXT,
-        includeVideoLink: true, includeFileLink: false, includeFooterHelp: true,
+        includeVideoLink: true, includeFooterHelp: true,
         simpleContent: "", spacing: 0,
         sections: [
           makeSection({
@@ -1122,7 +1095,6 @@
         ],
         styles: {
           link:       makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true }),
-          fileLink:   makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
           labels:     makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
           notice:     makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
           summary:    makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false }),
@@ -1141,9 +1113,7 @@
         mode: d.mode === "simple" ? "simple" : "video",
         siteName: d.siteName || "", url: d.url || "",
         linkText: d.linkText || DEFAULT_LINK_TEXT,
-        fileUrl: d.fileUrl || "", fileLinkText: d.fileLinkText || DEFAULT_FILE_LINK_TEXT,
         includeVideoLink: d.includeVideoLink !== false,
-        includeFileLink: !!d.includeFileLink,
         includeFooterHelp: d.includeFooterHelp !== false,
         simpleContent: d.simpleContent || "", spacing: 0,
         sections: [], styles: {},
@@ -1179,7 +1149,6 @@
       const st = d.styles || {};
       out.styles = {
         link:       makeStyle(st.link       || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2 }),
-        fileLink:   makeStyle(st.fileLink   || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true }),
         labels:     makeStyle(st.labels     || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 }),
         notice:     makeStyle(st.notice     || { colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false }),
         summary:    makeStyle(st.summary    || { size: 1, bold: false, underline: false }),
@@ -1316,16 +1285,11 @@
       return `<a href="${escapeHtml(url)}" onclick="window.open(this.href, '_blank', 'width=1000,height=800'); return false;" style="${inlineStyle(doc.styles.link)}">${escapeHtml(doc.linkText || DEFAULT_LINK_TEXT)}</a>`;
     }
 
-    function fileLinkHtmlFragment(fileUrl) {
-      return `<a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener noreferrer" style="${inlineStyle(doc.styles.fileLink)}">${escapeHtml(doc.fileLinkText || DEFAULT_FILE_LINK_TEXT)}</a>`;
-    }
-
     function footerHtmlFragment(url) {
       const helpText = styledSpan("Si le lien ne fonctionne pas, copiez l'adresse ci-dessous et collez-la dans le navigateur :", doc.styles.bottomText);
       return `<br>\n${helpText}<br>\n${escapeHtml(url)}`;
     }
 
-    function getDiversIdx()    { return doc.sections.findIndex((s) => s.id === "sec_divers") ?? doc.sections.findIndex((s) => s.isDefault && s.layout === "inline"); }
     function getConnexionIdx() { const i = doc.sections.findIndex((s) => s.id === "sec_connexion"); return i >= 0 ? i : doc.sections.findIndex((s) => s.isDefault && s.layout === "list"); }
     function getFooterIdx()    { const i = doc.sections.findIndex((s) => s.id === "sec_connexion"); if (i >= 0) return i; let last = -1; doc.sections.forEach((s, idx) => { if (s.isDefault) last = idx; }); return last; }
 
@@ -1336,18 +1300,13 @@
       const parts = [];
       let linkRendered = false, footerRendered = false;
       const connexionIdx = getConnexionIdx();
-      const diversIdx    = getDiversIdx();
       const footerIdx    = getFooterIdx();
       const groupBlock   = isTight() && connexionIdx >= 0;
 
       doc.sections.forEach((section, idx) => {
         const isConnexion = idx === connexionIdx;
-        const isDivers    = idx === diversIdx;
         const opts = { afterFooter: footerRendered };
 
-        if (isDivers && doc.includeFileLink && doc.fileUrl.trim()) {
-          opts.appendExtraHtml = `<br>\n${fileLinkHtmlFragment(doc.fileUrl.trim())}`;
-        }
         if (groupBlock && isConnexion) {
           if (doc.includeVideoLink) { opts.prependLinkHtml = linkHtmlFragment(url); linkRendered = true; }
           if (doc.includeFooterHelp && idx === footerIdx) { opts.appendFooterHtml = footerHtmlFragment(url); footerRendered = true; }
@@ -1607,7 +1566,6 @@
         style: s.titleStyle,
       }));
       targets.push({ id: "link",       label: "Lien vidéo",            style: doc.styles.link });
-      targets.push({ id: "fileLink",   label: "Lien fichier",           style: doc.styles.fileLink });
       targets.push({ id: "labels",     label: "Libellés des champs",    style: doc.styles.labels });
       targets.push({ id: "notice",     label: "Consignes importantes",  style: doc.styles.notice });
       targets.push({ id: "summary",    label: "Lien summary (details)", style: doc.styles.summary });
@@ -1617,7 +1575,6 @@
 
     function findStyleById(id) {
       if (id === "link")       return doc.styles.link;
-      if (id === "fileLink")   return doc.styles.fileLink;
       if (id === "labels")     return doc.styles.labels;
       if (id === "notice")     return doc.styles.notice;
       if (id === "summary")    return doc.styles.summary;
@@ -1662,7 +1619,6 @@
         s.titleStyle = makeStyle({ colorOn: true, colorValue: DEFAULT_TITLE_COLORS[s.id] || DEFAULT_STYLE_COLORS.connexionTitle, size: 1.2 });
       });
       doc.styles.link       = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.link, size: 1.2, underline: true });
-      doc.styles.fileLink   = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.fileLink, size: 1.1, underline: true });
       doc.styles.labels     = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.labels, size: 1 });
       doc.styles.notice     = makeStyle({ colorOn: true, colorValue: DEFAULT_STYLE_COLORS.notice, size: 1.1, bold: true, underline: false });
       doc.styles.summary    = makeStyle({ colorOn: false, colorValue: DEFAULT_STYLE_COLORS.summary, size: 1, bold: false, underline: false });
@@ -1773,10 +1729,7 @@
       document.getElementById("siteNameInput").value      = doc.siteName || "";
       document.getElementById("urlInput").value            = doc.url;
       document.getElementById("linkTextInput").value       = doc.linkText || DEFAULT_LINK_TEXT;
-      document.getElementById("fileUrlInput").value        = doc.fileUrl || "";
-      document.getElementById("fileLinkTextInput").value   = doc.fileLinkText || DEFAULT_FILE_LINK_TEXT;
       document.getElementById("includeVideoLink").checked  = doc.includeVideoLink !== false;
-      document.getElementById("includeFileLink").checked   = !!doc.includeFileLink;
       document.getElementById("includeFooterHelp").checked = doc.includeFooterHelp !== false;
       applyModeUI();
       if (doc.mode === "simple") mountSimpleEditor();
@@ -1802,8 +1755,8 @@
         exportVersion: 1, exportedAt: new Date().toISOString(),
         generator: "generateur-remarques", appVersion: APP_VERSION,
         siteName: doc.siteName, mode: doc.mode, url: doc.url,
-        linkText: doc.linkText, fileUrl: doc.fileUrl, fileLinkText: doc.fileLinkText,
-        includeVideoLink: doc.includeVideoLink, includeFileLink: doc.includeFileLink,
+        linkText: doc.linkText,
+        includeVideoLink: doc.includeVideoLink,
         includeFooterHelp: doc.includeFooterHelp,
         simpleContent: doc.simpleContent, spacing: doc.spacing,
         sections: doc.sections, styles: doc.styles,
@@ -1960,30 +1913,8 @@
     document.getElementById("siteNameInput").addEventListener("input", (e) => { doc.siteName = e.target.value; saveDoc(); });
     document.getElementById("urlInput").addEventListener("input", (e) => { doc.url = e.target.value; saveDoc(); updateOutput(); });
     document.getElementById("linkTextInput").addEventListener("input", (e) => { doc.linkText = e.target.value || DEFAULT_LINK_TEXT; saveDoc(); updateOutput(); });
-    document.getElementById("fileUrlInput").addEventListener("input", (e) => { doc.fileUrl = e.target.value; saveDoc(); updateOutput(); });
-    document.getElementById("fileLinkTextInput").addEventListener("input", (e) => { doc.fileLinkText = e.target.value || DEFAULT_FILE_LINK_TEXT; saveDoc(); updateOutput(); });
     document.getElementById("includeVideoLink").addEventListener("change", (e) => { doc.includeVideoLink = e.target.checked; saveDoc(); updateOutput(); });
-    document.getElementById("includeFileLink").addEventListener("change", (e) => { doc.includeFileLink = e.target.checked; saveDoc(); updateOutput(); });
     document.getElementById("includeFooterHelp").addEventListener("change", (e) => { doc.includeFooterHelp = e.target.checked; saveDoc(); updateOutput(); });
-
-    document.getElementById("btnPickFile").addEventListener("click", () => document.getElementById("fileUrlPicker").click());
-    document.getElementById("fileUrlPicker").addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0]; if (!file) return;
-      const name = file.name;
-      const urlInp  = document.getElementById("fileUrlInput");
-      const textInp = document.getElementById("fileLinkTextInput");
-      const cur = urlInp.value.trim();
-      if (!cur) { urlInp.value = name; doc.fileUrl = name; }
-      else if (cur.endsWith("/")) { urlInp.value = cur + name; doc.fileUrl = urlInp.value; }
-      if (!textInp.value.trim() || textInp.value === DEFAULT_FILE_LINK_TEXT) {
-        const label = name.replace(/\.[^.]+$/, "") || name;
-        textInp.value = label; doc.fileLinkText = label;
-      }
-      doc.includeFileLink = true; document.getElementById("includeFileLink").checked = true;
-      saveDoc(); updateOutput();
-      showToast("Fichier repéré — complétez l'URL serveur si nécessaire.");
-      e.target.value = "";
-    });
 
     const previewBgInput = document.getElementById("previewBgInput");
     previewBgInput.value = previewBg;
