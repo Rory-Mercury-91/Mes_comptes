@@ -698,6 +698,10 @@
         <button type="button" class="mode-btn" id="btnModeSimple">Remarque simple</button>
       </div>
       <div class="data-toolbar">
+        <div style="display:flex;align-items:center;gap:0.4rem;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.25rem 0.55rem;background:var(--surface);">
+          <label for="siteNameInput" style="font-size:0.78rem;color:var(--muted);white-space:nowrap;font-weight:600;">Site :</label>
+          <input type="text" id="siteNameInput" placeholder="Nom du site" style="background:transparent;border:none;color:var(--text);font-size:0.8rem;width:130px;padding:0;" />
+        </div>
         <button type="button" id="btnReset" title="Tout réinitialiser">↺ Réinitialiser</button>
         <button type="button" id="btnExport">⬆ Exporter</button>
         <button type="button" id="btnImport">⬇ Charger</button>
@@ -712,23 +716,6 @@
 
     <!-- ─ Colonne gauche ─ -->
     <div class="col-left">
-
-      <!-- ── Panneau : Fichier / Site ── -->
-      <div class="panel open" id="panelSite">
-        <button type="button" class="panel-toggle" data-panel="panelSite">
-          <span class="panel-toggle-icon">▶</span>
-          <span class="panel-toggle-title">Fichier &amp; export</span>
-        </button>
-        <div class="panel-body">
-          <div class="form-stack">
-            <div class="form-row">
-              <label for="siteNameInput">Site</label>
-              <input type="text" id="siteNameInput" placeholder="Nom du site (export JSON)" />
-            </div>
-          </div>
-          <p class="hint">Utilisé uniquement pour nommer le fichier d'export — absent du HTML généré.</p>
-        </div>
-      </div>
 
       <!-- ── Panneau mode Vidéo ── -->
       <div id="videoModePanel">
