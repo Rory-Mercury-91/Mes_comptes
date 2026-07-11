@@ -716,7 +716,7 @@
     <div class="col-left">
 
       <!-- ── Panneau mode Vidéo ── -->
-      <div id="videoModePanel" style="display:flex;flex-direction:column;gap:1rem;">
+      <div id="videoModePanel" style="display:flex;flex-direction:column;gap:1rem;" hidden>
 
         <!-- Mise en forme (toujours réduit par défaut) -->
         <div class="panel" id="panelStyles">
@@ -1669,9 +1669,9 @@
 
     function applyModeUI() {
       const isSimple = doc.mode === "simple";
-      document.getElementById("videoModePanel").hidden = isSimple;
+      const videoPanel = document.getElementById("videoModePanel");
+      videoPanel.style.display = isSimple ? "none" : "flex";
       document.getElementById("simpleModePanel").hidden = !isSimple;
-      document.getElementById("panelStyles")?.classList.toggle("hidden-panel", isSimple);
       document.getElementById("btnModeVideo").classList.toggle("active", !isSimple);
       document.getElementById("btnModeSimple").classList.toggle("active", isSimple);
     }
